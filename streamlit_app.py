@@ -1,4 +1,3 @@
-
 import re
 import streamlit as st
 import pandas as pd
@@ -555,11 +554,13 @@ def main():
         st.caption("Quick prompts to get started")
         st.markdown(
             """
-            • Top 10 products by revenue  
-            • Order volume trend by month  
+            • Customer counts by country 
             • Customers by region & country  
-            • Gross margin by product category  
             • Repeat buyers by city  
+            • Total number of customers  
+            • Total number of orders
+            • how many customers each country
+             
             """
         )
         st.divider()
