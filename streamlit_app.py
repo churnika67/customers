@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import bcrypt
 
-load_dotenv()  # reads variables from a .env file and sets them in os.environ
+load_dotenv()
 
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 HASHED_PASSWORD = st.secrets["HASHED_PASSWORD"].encode("utf-8")
@@ -33,13 +33,16 @@ st.markdown(
         }
 
         .block-container {
-            padding: 1.8rem 2.2rem 3.2rem;
+            padding: 1.4rem 2.2rem 3.2rem;
             max-width: 1380px;
         }
 
         a { text-decoration: none; }
 
-        /* ---------- TOP NAV (minimal) ---------- */
+        /* hide default streamlit header so ours is the only one */
+        header {visibility: hidden; height: 0px;}
+
+        /* ---------- TOP BAR ---------- */
         .top-nav {
             display: flex;
             align-items: center;
@@ -127,27 +130,14 @@ st.markdown(
             100% { background-position: 0% 50%; }
         }
 
-        /* ---------- MAIN SHELL (animated border) ---------- */
-        .app-shell {
-            margin-top: 1.7rem;
-            border-radius: 28px;
-            padding: 1.5px;
-            background: linear-gradient(120deg, #22d3ee, #6366f1, #ec4899, #22d3ee);
-            background-size: 260% 260%;
-            animation: auroraBorder 16s ease infinite;
-            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.9);
-        }
-
-        @keyframes auroraBorder {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .app-shell-inner {
-            border-radius: 26px;
-            background: radial-gradient(circle at top, #020617 0, #020617 55%, #020617 100%);
-            padding: 22px 24px 24px;
+        /* ---------- WORKSPACE SECTION ---------- */
+        .workspace {
+            margin-top: 1.6rem;
+            padding: 18px 20px 20px;
+            border-radius: 24px;
+            background: radial-gradient(circle at top left, #020617 0, #020617 60%, #020617 100%);
+            border: 1px solid rgba(31, 41, 55, 0.85);
+            box-shadow: 0 26px 60px rgba(15, 23, 42, 0.95);
         }
 
         .section-title {
@@ -298,7 +288,6 @@ st.markdown(
 
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
-        header {background: transparent;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -391,8 +380,8 @@ def login_screen():
 
     st.caption("Passwords are verified with bcrypt. Close the tab or click Logout to end the session.")
 
+
 def require_login():
-    """Enforce login before showing main app."""
     if "logged_in" not in st.session_state or not st.session_state.logged_in:
         login_screen()
         st.stop()
@@ -405,15 +394,12 @@ def get_db_url():
     POSTGRES_PASSWORD = st.secrets["POSTGRES_PASSWORD"]
     POSTGRES_SERVER = st.secrets["POSTGRES_SERVER"]
     POSTGRES_DATABASE = st.secrets["POSTGRES_DATABASE"]
-
-    DATABASE_URL = f"postgresql://{POSTGRES_USERNAME}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}/{POSTGRES_DATABASE}"
-    return DATABASE_URL
+    return f"postgresql://{POSTGRES_USERNAME}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}/{POSTGRES_DATABASE}"
 
 DATABASE_URL = get_db_url()
 
 @st.cache_resource
 def get_db_connection():
-    """Create and cache database connection."""
     try:
         conn = psycopg2.connect(DATABASE_URL, connect_timeout=CONNECT_TIMEOUT_S)
         conn.set_session(autocommit=True)
@@ -430,7 +416,6 @@ def get_db_connection():
         return None
 
 def _ensure_limit(sql, default_limit=QUERY_DEFAULT_LIMIT):
-    """Append a LIMIT if one is not present to keep queries fast/safe."""
     pattern = re.compile(r"\\blimit\\b", re.IGNORECASE)
     if pattern.search(sql):
         return sql.strip()
@@ -438,7 +423,6 @@ def _ensure_limit(sql, default_limit=QUERY_DEFAULT_LIMIT):
     return f"{stripped}\\nLIMIT {default_limit};"
 
 def run_query(sql):
-    """Execute SQL query and return results as DataFrame."""
     conn = get_db_connection()
     if conn is None:
         return None
@@ -456,7 +440,6 @@ def run_query(sql):
 
 @st.cache_resource
 def get_openai_client():
-    """Create and cache OpenAI client."""
     return OpenAI(api_key=OPENAI_API_KEY)
 
 def extract_sql_from_response(response_text):
@@ -507,7 +490,7 @@ Generate the SQL query:"""
 def main():
     require_login()
 
-    # Top nav
+    # Top bar
     st.markdown(
         """
         <div class="top-nav">
@@ -529,7 +512,7 @@ def main():
         """
         <div class="hero-kicker">
             <span class="hero-kicker-dot"></span>
-            Natural language → SQL, in one glass workspace
+            Natural language → SQL, in one workspace
         </div>
         """,
         unsafe_allow_html=True,
@@ -567,11 +550,11 @@ def main():
     if "current_question" not in st.session_state:
         st.session_state.current_question = None
 
-    # Workspace card
-    st.markdown("<div class='app-shell'><div class='app-shell-inner'>", unsafe_allow_html=True)
+    # Workspace card (NO HTML wrappers around columns now)
+    st.markdown("<div class='workspace'>", unsafe_allow_html=True)
+
     left, right = st.columns([1.9, 1], gap="large")
 
-    # LEFT: question + SQL + results
     with left:
         st.markdown("<div class='section-title'>Your question</div>", unsafe_allow_html=True)
         st.markdown(
@@ -647,7 +630,6 @@ def main():
                         st.success(f"✅ Query returned {len(df)} rows")
                         st.dataframe(df, use_container_width=True)
 
-    # RIGHT: stats + schema + history
     with right:
         st.markdown("<div class='section-title'>Workspace stats</div>", unsafe_allow_html=True)
         stats_cols = st.columns(2)
@@ -681,7 +663,7 @@ def main():
                 st.code(item["sql"], language="sql")
                 st.caption(f"Rows: {item['rows']}")
 
-    st.markdown("</div></div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
