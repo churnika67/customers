@@ -18,17 +18,16 @@ CONNECT_TIMEOUT_S = 5
 
 # ---------- PAGE CONFIG & GLOBAL STYLES ----------
 
-st.set_page_config(page_title="SQL Copilot", page_icon="🧭", layout="wide")
+st.set_page_config(page_title="Aurora Query Studio", page_icon="🧭", layout="wide")
 
 st.markdown(
     """
     <style>
-        /* ---------- GLOBAL ---------- */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
         html, body, [class*="css"] {
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
-            background: radial-gradient(circle at top left, #020617 0, #020617 30%, #020617 60%, #020617 100%);
+            font-family: 'SF Pro Display', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+            background: radial-gradient(circle at top, #0b1220 0, #020617 55%, #020617 100%);
             color: #e5e7eb;
         }
 
@@ -37,83 +36,112 @@ st.markdown(
             max-width: 1350px;
         }
 
-        /* ---------- CARDS / PANELS ---------- */
-        .panel {
-            background: #020617;
-            border-radius: 18px;
-            padding: 20px 20px 22px;
-            border: 1px solid rgba(148, 163, 184, 0.35);
-            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.55);
-        }
-
-        .headline {
-            font-size: 30px;
+        /* Brand header */
+        .brand-title {
+            font-size: 32px;
             font-weight: 650;
-            letter-spacing: -0.02em;
-            color: #f9fafb;
+            letter-spacing: -0.035em;
+            background: linear-gradient(120deg, #e5e7eb, #c7d2fe, #a5b4fc);
+            -webkit-background-clip: text;
+            color: transparent;
         }
 
-        .subhead {
+        .brand-subtitle {
             color: #9ca3af;
             font-size: 14.5px;
+            max-width: 620px;
         }
 
-        .pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 12px;
-            border-radius: 999px;
-            background: radial-gradient(circle at 0 0, #38bdf8 0, #6366f1 40%, #a855f7 100%);
-            color: #0b1120;
-            font-size: 12px;
+        /* Main glass shell */
+        .app-shell {
+            margin-top: 1.5rem;
+            border-radius: 26px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(94, 234, 212, 0.45), rgba(129, 140, 248, 0.55));
+            box-shadow: 0 40px 80px rgba(15, 23, 42, 0.7);
+        }
+
+        .app-shell-inner {
+            border-radius: 24px;
+            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
+            padding: 22px 24px 24px;
+        }
+
+        /* Panels inside shell */
+        .section-title {
+            font-size: 15px;
             font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
+            margin-bottom: 0.25rem;
         }
 
-        /* ---------- TEXT INPUTS ---------- */
+        .section-caption {
+            font-size: 13px;
+            color: #9ca3af;
+            margin-bottom: 0.7rem;
+        }
+
+        .side-card {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            border-radius: 16px;
+            padding: 12px 14px;
+            margin-bottom: 0.6rem;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* Inputs */
         .stTextArea textarea {
-            border-radius: 14px !important;
-            border: 1px solid rgba(148, 163, 184, 0.6) !important;
-            background: rgba(15, 23, 42, 0.9) !important;
+            border-radius: 18px !important;
+            border: 1px solid rgba(148, 163, 184, 0.7) !important;
+            background: rgba(15, 23, 42, 0.97) !important;
             color: #e5e7eb !important;
             font-size: 15px !important;
         }
 
         .stTextInput input {
-            border-radius: 12px !important;
+            border-radius: 14px !important;
             border: 1px solid rgba(148, 163, 184, 0.7) !important;
-            background: rgba(15, 23, 42, 0.9) !important;
+            background: rgba(15, 23, 42, 0.97) !important;
             color: #e5e7eb !important;
         }
 
-        /* ---------- BUTTONS ---------- */
+        /* Buttons */
         .btn-primary button {
-            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            background: linear-gradient(135deg, #2563eb, #4f46e5);
             border: none;
             color: #f9fafb;
             font-weight: 600;
             border-radius: 999px;
-            padding: 0.5rem 1rem;
-            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.4);
+            padding: 0.45rem 1.1rem;
+            box-shadow: 0 16px 30px rgba(37, 99, 235, 0.45);
         }
         .btn-primary button:hover {
             filter: brightness(1.08);
         }
 
         .btn-secondary button {
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(15, 23, 42, 0.9);
             color: #e5e7eb;
             border-radius: 999px;
             border: 1px solid rgba(148, 163, 184, 0.6);
             font-weight: 500;
         }
 
-        /* ---------- SIDEBAR ---------- */
+        /* Sidebar */
         [data-testid="stSidebar"] {
             background: #020617 !important;
-            border-right: 1px solid rgba(31, 41, 55, 0.9);
+            border-right: 1px solid rgba(15, 23, 42, 0.95);
         }
         [data-testid="stSidebar"] * {
             color: #e5e7eb !important;
@@ -130,14 +158,7 @@ st.markdown(
             border-color: #38bdf8;
         }
 
-        /* ---------- METRIC CARDS / CODE ---------- */
-        .metric-card {
-            background: rgba(15, 23, 42, 0.95);
-            border: 1px solid rgba(148, 163, 184, 0.45);
-            border-radius: 14px;
-            padding: 10px 12px;
-        }
-
+        /* Code blocks */
         .stCode pre {
             border-radius: 14px !important;
             border: 1px solid rgba(148, 163, 184, 0.4) !important;
@@ -146,7 +167,6 @@ st.markdown(
             font-size: 13px !important;
         }
 
-        /* Hide default Streamlit menu/footer for a cleaner, app-like feel */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {background: transparent;}
@@ -182,33 +202,29 @@ Common calculations:
 - Date filters: OrderDate is a DATE column
 """
 
-
 # ---------- AUTH / LOGIN ----------
 
 def login_screen():
     """Display login screen and authenticate user."""
-    st.markdown("<p class='pill'>Secure Workspace</p>", unsafe_allow_html=True)
-    st.markdown("<div class='headline'>Sign in to SQL Copilot</div>", unsafe_allow_html=True)
+    st.markdown("<div class='brand-title'>Aurora Query Studio</div>", unsafe_allow_html=True)
     st.markdown(
-        "<p class='subhead'>Enter your password to access the interactive SQL assistant for your analytics warehouse.</p>",
+        "<p class='brand-subtitle'>A focused, private workspace to translate natural language into safe, optimized SQL for your analytics warehouse.</p>",
         unsafe_allow_html=True,
     )
 
-    with st.container():
-        password = st.text_input("Password", type="password", key="login_password")
-        col1, col2 = st.columns([1, 3])
-        with col1:
-            with st.container():
-                st.markdown("<div class='btn-primary'>", unsafe_allow_html=True)
-                login_btn = st.button("🔓 Enter Workspace", use_container_width=True)
-                st.markdown("</div>", unsafe_allow_html=True)
+    password = st.text_input("Workspace password", type="password", key="login_password")
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        st.markdown("<div class='btn-primary'>", unsafe_allow_html=True)
+        login_btn = st.button("🔓 Enter", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     if login_btn:
         if password:
             try:
                 if bcrypt.checkpw(password.encode("utf-8"), HASHED_PASSWORD):
                     st.session_state.logged_in = True
-                    st.success("✅ Authentication successful. Loading your workspace…")
+                    st.success("✅ Authentication successful. Loading workspace…")
                     st.rerun()
                 else:
                     st.error("❌ Incorrect password")
@@ -217,7 +233,7 @@ def login_screen():
         else:
             st.warning("⚠️ Please enter a password")
 
-    st.caption("Passwords are verified with bcrypt. Your session stays active until you logout or close this tab.")
+    st.caption("Passwords are verified with bcrypt. Your session remains active until you logout or close this tab.")
 
 
 def require_login():
@@ -225,7 +241,6 @@ def require_login():
     if "logged_in" not in st.session_state or not st.session_state.logged_in:
         login_screen()
         st.stop()
-
 
 # ---------- DB HELPERS ----------
 
@@ -264,7 +279,7 @@ def get_db_connection():
 
 def _ensure_limit(sql, default_limit=QUERY_DEFAULT_LIMIT):
     """Append a LIMIT if one is not present to keep queries fast/safe."""
-    pattern = re.compile(r"\\blimit\\b", re.IGNORECASE)
+    pattern = re.compile(r"\blimit\b", re.IGNORECASE)
     if pattern.search(sql):
         return sql.strip()
 
@@ -289,7 +304,6 @@ def run_query(sql):
         st.error(f"Error executing query: {e}")
         return None
 
-
 # ---------- OPENAI HELPERS ----------
 
 @st.cache_resource
@@ -300,7 +314,7 @@ def get_openai_client():
 
 def extract_sql_from_response(response_text):
     clean_sql = re.sub(
-        r"^```sql\\s*|\\s*```$", "", response_text, flags=re.IGNORECASE | re.MULTILINE
+        r"^```sql\s*|\s*```$", "", response_text, flags=re.IGNORECASE | re.MULTILINE
     ).strip()
     return clean_sql
 
@@ -345,16 +359,15 @@ Generate the SQL query:"""
         st.error(f"Error calling OpenAI API: {e}")
         return None
 
-
 # ---------- MAIN APP ----------
 
 def main():
     require_login()
 
-    st.markdown("<p class='pill'>SQL Copilot</p>", unsafe_allow_html=True)
-    st.markdown("<div class='headline'>Ask. Inspect. Execute.</div>", unsafe_allow_html=True)
+    # Brand header
+    st.markdown("<div class='brand-title'>Aurora Query Studio</div>", unsafe_allow_html=True)
     st.markdown(
-        "<p class='subhead'>Describe the insight you need in plain language. Review the generated SQL, tweak if needed, then run it with built-in guardrails.</p>",
+        "<p class='brand-subtitle'>Describe the insight you want. Aurora turns it into audited SQL you can inspect, refine, and run with guardrails.</p>",
         unsafe_allow_html=True,
     )
 
@@ -385,13 +398,17 @@ def main():
     if "current_question" not in st.session_state:
         st.session_state.current_question = None
 
-    left, right = st.columns([1.8, 1], gap="large")
+    # One big glass card for the whole workspace
+    st.markdown("<div class='app-shell'><div class='app-shell-inner'>", unsafe_allow_html=True)
+    left, right = st.columns([1.85, 1], gap="large")
 
-    # ---------- LEFT COLUMN: QUESTION + SQL + RESULTS ----------
+    # LEFT: question + sql + results
     with left:
-        st.markdown("<div class='panel'>", unsafe_allow_html=True)
-
-        st.markdown("#### Your question")
+        st.markdown("<div class='section-title'>Your question</div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div class='section-caption'>Write in plain English. You can mention products, regions, time ranges, and metrics.</div>",
+            unsafe_allow_html=True,
+        )
         user_question = st.text_area(
             label="",
             height=120,
@@ -423,15 +440,15 @@ def main():
                 st.session_state.generated_sql = None
                 st.session_state.current_question = None
 
-            with st.spinner("🧠 Generating SQL…"):
+            with st.spinner("🧠 Composing SQL…"):
                 sql_query = generate_sql_with_gpt(user_question)
                 if sql_query:
                     st.session_state.generated_sql = sql_query
                     st.session_state.current_question = user_question
 
         if st.session_state.generated_sql:
-            st.divider()
-            st.markdown("#### Generated SQL")
+            st.markdown("---")
+            st.markdown("<div class='section-title'>Generated SQL</div>", unsafe_allow_html=True)
             st.caption(f"Question: {st.session_state.current_question}")
 
             edited_sql = st.text_area(
@@ -442,12 +459,12 @@ def main():
 
             st.markdown("<div class='btn-primary'>", unsafe_allow_html=True)
             run_button = st.button(
-                "▶️ Run Query", use_container_width=True, key="run_btn"
+                "▶️ Run query", use_container_width=True, key="run_btn"
             )
             st.markdown("</div>", unsafe_allow_html=True)
 
             if run_button:
-                with st.spinner("Executing query…"):
+                with st.spinner("Running against warehouse…"):
                     df = run_query(edited_sql)
                     if df is not None:
                         st.session_state.query_history.append(
@@ -460,34 +477,33 @@ def main():
                         st.success(f"✅ Query returned {len(df)} rows")
                         st.dataframe(df, use_container_width=True)
 
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # ---------- RIGHT COLUMN: STATS / SCHEMA / HISTORY ----------
+    # RIGHT: stats + schema + history
     with right:
-        st.markdown("<div class='panel'>", unsafe_allow_html=True)
-
-        st.markdown("#### Workspace stats")
-        stat_cols = st.columns(2)
-        with stat_cols[0]:
+        st.markdown("<div class='section-title'>Workspace stats</div>", unsafe_allow_html=True)
+        stats_cols = st.columns(2)
+        with stats_cols[0]:
             st.markdown(
-                f"<div class='metric-card'><div style='font-size:12px;color:#9ca3af;'>Default LIMIT</div><div style='font-size:20px;font-weight:600;color:#e5e7eb;'>{QUERY_DEFAULT_LIMIT}</div></div>",
+                f"<div class='side-card'><div class='metric-label'>Default limit</div><div class='metric-value'>{QUERY_DEFAULT_LIMIT}</div></div>",
                 unsafe_allow_html=True,
             )
-        with stat_cols[1]:
+        with stats_cols[1]:
             st.markdown(
-                f"<div class='metric-card'><div style='font-size:12px;color:#9ca3af;'>Statement timeout</div><div style='font-size:20px;font-weight:600;color:#e5e7eb;'>{int(STATEMENT_TIMEOUT_MS/1000)}s</div></div>",
+                f"<div class='side-card'><div class='metric-label'>Statement timeout</div><div class='metric-value'>{int(STATEMENT_TIMEOUT_MS/1000)}s</div></div>",
                 unsafe_allow_html=True,
             )
 
-        st.markdown("#### Schema primer")
-        st.caption("Use these anchors when you ask your question.")
+        st.markdown("<div class='section-title' style='margin-top:0.6rem;'>Schema primer</div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div class='section-caption'>Use these anchors when you phrase your question.</div>",
+            unsafe_allow_html=True,
+        )
         st.code(
             "Region → Country → Customer → OrderDetail\nProductCategory → Product → OrderDetail",
             language="text",
         )
 
         if st.session_state.query_history:
-            st.markdown("#### Recent queries")
+            st.markdown("<div class='section-title' style='margin-top:0.6rem;'>Recent queries</div>", unsafe_allow_html=True)
             for idx, item in enumerate(reversed(st.session_state.query_history[-3:])):
                 st.markdown(
                     f"**Q{len(st.session_state.query_history)-idx}:** {item['question']}"
@@ -495,7 +511,7 @@ def main():
                 st.code(item["sql"], language="sql")
                 st.caption(f"Rows: {item['rows']}")
 
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div></div>", unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
