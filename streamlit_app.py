@@ -28,25 +28,25 @@ st.markdown(
         /* ---------- GLOBAL ---------- */
         html, body, [class*="css"] {
             font-family: 'SF Pro Display', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
-            background: #f5f5f7;
-            color: #111827;
+            background: radial-gradient(circle at top left, #020617 0, #020617 45%, #020617 100%);
+            color: #e5e7eb;
         }
 
         .block-container {
-            padding: 1.8rem 2.5rem 3.2rem;
-            max-width: 1320px;
+            padding: 1.8rem 2.2rem 3.2rem;
+            max-width: 1380px;
         }
 
         a { text-decoration: none; }
 
-        /* ---------- TOP NAV (APPLE-LIKE) ---------- */
+        /* ---------- TOP NAV (minimal) ---------- */
         .top-nav {
             display: flex;
             align-items: center;
             justify-content: space-between;
             font-size: 13px;
-            color: #4b5563;
-            margin-bottom: 1.4rem;
+            color: #9ca3af;
+            margin-bottom: 0.8rem;
         }
         .top-nav-left {
             display: flex;
@@ -54,11 +54,12 @@ st.markdown(
             gap: 10px;
             font-weight: 500;
         }
-        .logo-dot {
+        .logo-orb {
             width: 18px;
             height: 18px;
             border-radius: 999px;
-            background: radial-gradient(circle at 30% 20%, #60a5fa, #6366f1);
+            background: conic-gradient(from 160deg, #22d3ee, #6366f1, #ec4899, #22d3ee);
+            box-shadow: 0 0 18px rgba(94, 234, 212, 0.65);
         }
         .top-nav-right {
             display: flex;
@@ -66,18 +67,19 @@ st.markdown(
             gap: 12px;
         }
         .status-pill {
-            padding: 4px 10px;
+            padding: 3px 9px;
             border-radius: 999px;
-            background: #e5f0ff;
-            color: #1d4ed8;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: .06em;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            font-size: 10px;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
+            color: #e5e7eb;
         }
         .status-text {
-            color: #6b7280;
             font-size: 12px;
+            color: #9ca3af;
         }
 
         /* ---------- HERO ---------- */
@@ -85,186 +87,211 @@ st.markdown(
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 4px 10px;
+            padding: 4px 11px;
             border-radius: 999px;
-            background: #e5e7eb;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.4);
             font-size: 11px;
-            color: #4b5563;
-            margin-bottom: .55rem;
+            color: #cbd5f5;
+            margin-bottom: 0.55rem;
         }
         .hero-kicker-dot {
-            width: 6px;
-            height: 6px;
+            width: 7px;
+            height: 7px;
             border-radius: 999px;
-            background: #10b981;
+            background: #4ade80;
+            box-shadow: 0 0 12px rgba(74, 222, 128, 0.9);
         }
 
         .brand-title {
-            font-size: 36px;
+            font-size: 34px;
             font-weight: 650;
             letter-spacing: -0.045em;
-            color: #111827;
+            background: linear-gradient(120deg, #e5e7eb, #bfdbfe, #a855f7);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            color: transparent;
+            animation: auroraTitle 10s ease-in-out infinite;
         }
 
         .brand-subtitle {
-            color: #4b5563;
-            font-size: 15px;
-            max-width: 640px;
-            margin-top: 0.35rem;
+            color: #9ca3af;
+            font-size: 14.5px;
+            max-width: 650px;
+            margin-top: 0.3rem;
         }
 
-        /* ---------- MAIN SHELL ---------- */
+        @keyframes auroraTitle {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* ---------- MAIN SHELL (animated border) ---------- */
         .app-shell {
-            margin-top: 1.9rem;
-            border-radius: 32px;
-            padding: 1px;
-            background: linear-gradient(135deg, rgba(209, 213, 219, 0.9), rgba(148, 163, 184, 0.9));
+            margin-top: 1.7rem;
+            border-radius: 28px;
+            padding: 1.5px;
+            background: linear-gradient(120deg, #22d3ee, #6366f1, #ec4899, #22d3ee);
+            background-size: 260% 260%;
+            animation: auroraBorder 16s ease infinite;
+            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.9);
+        }
+
+        @keyframes auroraBorder {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         .app-shell-inner {
-            border-radius: 30px;
-            background: #ffffff;
-            padding: 24px 26px 26px;
-            box-shadow: 0 28px 60px rgba(15, 23, 42, 0.12);
+            border-radius: 26px;
+            background: radial-gradient(circle at top, #020617 0, #020617 55%, #020617 100%);
+            padding: 22px 24px 24px;
         }
 
         .section-title {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             margin-bottom: 0.1rem;
-            color: #111827;
+            color: #e5e7eb;
         }
 
         .section-caption {
-            font-size: 13px;
+            font-size: 12.5px;
             color: #6b7280;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.7rem;
         }
 
         .side-card {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 16px;
-            padding: 12px 14px;
+            background: rgba(15, 23, 42, 0.98);
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            border-radius: 18px;
+            padding: 11px 13px;
             margin-bottom: 0.7rem;
-            transition: box-shadow 160ms ease-out, transform 160ms ease-out;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.75);
+            transition: box-shadow 160ms ease-out, transform 160ms ease-out, border-color 160ms ease-out;
         }
 
         .side-card:hover {
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-            transform: translateY(-1px);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.95);
+            transform: translateY(-2px);
+            border-color: rgba(129, 140, 248, 0.9);
         }
 
         .metric-label {
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.08em;
             color: #9ca3af;
         }
 
         .metric-value {
-            font-size: 20px;
+            font-size: 19px;
             font-weight: 600;
-            color: #111827;
+            color: #e5e7eb;
         }
 
         /* ---------- TEXT INPUTS ---------- */
         .stTextArea textarea {
-            border-radius: 16px !important;
-            border: 1px solid #d1d5db !important;
-            background: #f9fafb !important;
-            color: #111827 !important;
-            font-size: 15px !important;
-            transition: box-shadow 160ms ease-out, border-color 160ms ease-out, background 160ms ease-out;
+            border-radius: 18px !important;
+            border: 1px solid #1f2937 !important;
+            background: radial-gradient(circle at top left, #020617 0, #020617 60%, #020617 100%) !important;
+            color: #e5e7eb !important;
+            font-size: 14.5px !important;
+            transition: box-shadow 160ms ease-out, border-color 160ms ease-out, background 160ms ease-out, transform 120ms ease-out;
         }
 
         .stTextArea textarea::placeholder {
-            color: #9ca3af !important;
+            color: #6b7280 !important;
         }
 
         .stTextInput input {
-            border-radius: 14px !important;
-            border: 1px solid #d1d5db !important;
-            background: #f9fafb !important;
-            color: #111827 !important;
-            transition: box-shadow 160ms ease-out, border-color 160ms ease-out, background 160ms ease-out;
+            border-radius: 16px !important;
+            border: 1px solid #1f2937 !important;
+            background: #020617 !important;
+            color: #e5e7eb !important;
+            transition: box-shadow 160ms ease-out, border-color 160ms ease-out, background 160ms ease-out, transform 120ms ease-out;
         }
 
         .stTextInput input::placeholder {
-            color: #9ca3af !important;
+            color: #6b7280 !important;
         }
 
         .stTextArea textarea:focus,
         .stTextInput input:focus {
             outline: none !important;
-            border-color: #0071e3 !important;
-            box-shadow: 0 0 0 1px #0071e3, 0 10px 25px rgba(15, 23, 42, 0.12) !important;
-            background: #ffffff !important;
+            border-color: #22d3ee !important;
+            box-shadow: 0 0 0 1px #22d3ee, 0 14px 40px rgba(8, 47, 73, 0.85) !important;
+            background: #020617 !important;
+            transform: translateY(-1px);
         }
 
         /* ---------- BUTTONS ---------- */
         .btn-primary button {
-            background: #0071e3;
+            background: linear-gradient(135deg, #22d3ee, #6366f1);
             border: none;
-            color: #ffffff;
+            color: #f9fafb;
             font-weight: 600;
             border-radius: 999px;
-            padding: 0.45rem 1.35rem;
-            box-shadow: 0 12px 24px rgba(0, 113, 227, 0.30);
-            transition: transform 140ms ease-out, box-shadow 140ms ease-out, background 140ms ease-out;
+            padding: 0.42rem 1.4rem;
+            box-shadow: 0 16px 36px rgba(37, 99, 235, 0.75);
+            transition: transform 140ms ease-out, box-shadow 140ms ease-out, filter 140ms ease-out;
         }
         .btn-primary button:hover {
-            background: #005bb5;
+            filter: brightness(1.05);
             transform: translateY(-1px);
-            box-shadow: 0 16px 30px rgba(0, 113, 227, 0.35);
+            box-shadow: 0 20px 44px rgba(37, 99, 235, 0.9);
         }
         .btn-primary button:active {
             transform: translateY(0);
-            box-shadow: 0 8px 16px rgba(0, 113, 227, 0.25);
+            box-shadow: 0 10px 26px rgba(37, 99, 235, 0.7);
         }
 
         .btn-secondary button {
-            background: #f3f4f6;
-            color: #111827;
+            background: rgba(15, 23, 42, 0.95);
+            color: #e5e7eb;
             border-radius: 999px;
-            border: 1px solid #d1d5db;
+            border: 1px solid #4b5563;
             font-weight: 500;
-            transition: background 140ms ease-out, transform 140ms ease-out, box-shadow 140ms ease-out;
+            transition: background 140ms ease-out, transform 140ms ease-out, box-shadow 140ms ease-out, border-color 140ms ease-out;
         }
         .btn-secondary button:hover {
-            background: #e5e7eb;
+            background: #020617;
             transform: translateY(-1px);
-            box-shadow: 0 10px 24px rgba(148, 163, 184, 0.4);
+            border-color: #9ca3af;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.9);
         }
 
         /* ---------- SIDEBAR ---------- */
         [data-testid="stSidebar"] {
-            background: #f5f5f7 !important;
-            border-right: 1px solid #e5e7eb;
+            background: #020617 !important;
+            border-right: 1px solid #020617;
         }
         [data-testid="stSidebar"] * {
-            color: #111827 !important;
+            color: #e5e7eb !important;
         }
         [data-testid="stSidebar"] .stButton button {
             width: 100%;
             border-radius: 999px;
-            border: 1px solid #d1d5db;
-            background: #ffffff;
-            color: #111827;
+            border: 1px solid #4b5563;
+            background: #020617;
+            color: #e5e7eb;
             font-weight: 500;
-            transition: background 140ms ease-out, box-shadow 140ms ease-out, transform 140ms ease-out;
+            transition: background 140ms ease-out, box-shadow 140ms ease-out, transform 140ms ease-out, border-color 140ms ease-out;
         }
         [data-testid="stSidebar"] .stButton button:hover {
-            background: #f3f4f6;
-            box-shadow: 0 8px 18px rgba(148, 163, 184, 0.6);
+            background: #020617;
+            border-color: #22d3ee;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.95);
             transform: translateY(-1px);
         }
 
         /* ---------- CODE BLOCKS ---------- */
         .stCode pre {
             border-radius: 14px !important;
-            border: 1px solid #e5e7eb !important;
-            background: #0f172a !important;
+            border: 1px solid rgba(148, 163, 184, 0.5) !important;
+            background: #020617 !important;
             color: #e5e7eb !important;
             font-size: 13px !important;
         }
@@ -308,16 +335,17 @@ Common calculations:
 
 def login_screen():
     """Display login screen and authenticate user."""
-    # mini nav even on login
+
     st.markdown(
         """
         <div class="top-nav">
             <div class="top-nav-left">
-                <div class="logo-dot"></div>
+                <div class="logo-orb"></div>
                 <div>Aurora</div>
             </div>
             <div class="top-nav-right">
-                <span class="status-text">Secure workspace</span>
+                <span class="status-pill">Private</span>
+                <span class="status-text">Secure SQL workspace</span>
             </div>
         </div>
         """,
@@ -328,14 +356,15 @@ def login_screen():
         """
         <div class="hero-kicker">
             <span class="hero-kicker-dot"></span>
-            Private SQL assistant
+            Password-protected session
         </div>
         """,
         unsafe_allow_html=True,
     )
+
     st.markdown("<div class='brand-title'>Aurora Query Studio</div>", unsafe_allow_html=True)
     st.markdown(
-        "<p class='brand-subtitle'>Sign in to your Aurora workspace to turn natural language into safe, optimized SQL for your analytics database.</p>",
+        "<p class='brand-subtitle'>Sign in to turn natural language into safe, optimized SQL. Your session stays local to this browser.</p>",
         unsafe_allow_html=True,
     )
 
@@ -360,8 +389,7 @@ def login_screen():
         else:
             st.warning("⚠️ Please enter a password")
 
-    st.caption("Passwords are verified with bcrypt. Your session remains active until you logout or close this tab.")
-
+    st.caption("Passwords are verified with bcrypt. Close the tab or click Logout to end the session.")
 
 def require_login():
     """Enforce login before showing main app."""
@@ -381,9 +409,7 @@ def get_db_url():
     DATABASE_URL = f"postgresql://{POSTGRES_USERNAME}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}/{POSTGRES_DATABASE}"
     return DATABASE_URL
 
-
 DATABASE_URL = get_db_url()
-
 
 @st.cache_resource
 def get_db_connection():
@@ -403,27 +429,22 @@ def get_db_connection():
         st.error(f"Failed to connect to database: {e}")
         return None
 
-
 def _ensure_limit(sql, default_limit=QUERY_DEFAULT_LIMIT):
     """Append a LIMIT if one is not present to keep queries fast/safe."""
-    pattern = re.compile(r"\blimit\b", re.IGNORECASE)
+    pattern = re.compile(r"\\blimit\\b", re.IGNORECASE)
     if pattern.search(sql):
         return sql.strip()
-
     stripped = sql.strip().rstrip(";")
-    return f"{stripped}\nLIMIT {default_limit};"
-
+    return f"{stripped}\\nLIMIT {default_limit};"
 
 def run_query(sql):
     """Execute SQL query and return results as DataFrame."""
     conn = get_db_connection()
     if conn is None:
         return None
-
     safe_sql = _ensure_limit(sql)
     if safe_sql != sql:
         st.info(f"Added LIMIT {QUERY_DEFAULT_LIMIT} to keep the query responsive.")
-
     try:
         df = pd.read_sql_query(safe_sql, conn)
         return df
@@ -438,13 +459,11 @@ def get_openai_client():
     """Create and cache OpenAI client."""
     return OpenAI(api_key=OPENAI_API_KEY)
 
-
 def extract_sql_from_response(response_text):
     clean_sql = re.sub(
-        r"^```sql\s*|\s*```$", "", response_text, flags=re.IGNORECASE | re.MULTILINE
+        r"^```sql\\s*|\\s*```$", "", response_text, flags=re.IGNORECASE | re.MULTILINE
     ).strip()
     return clean_sql
-
 
 def generate_sql_with_gpt(user_question):
     client = get_openai_client()
@@ -464,7 +483,6 @@ Requirements:
 7. Add helpful column aliases using AS
 
 Generate the SQL query:"""
-
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -478,10 +496,8 @@ Generate the SQL query:"""
             temperature=0.1,
             max_tokens=1000,
         )
-
         sql_query = extract_sql_from_response(response.choices[0].message.content)
         return sql_query
-
     except Exception as e:
         st.error(f"Error calling OpenAI API: {e}")
         return None
@@ -496,12 +512,12 @@ def main():
         """
         <div class="top-nav">
             <div class="top-nav-left">
-                <div class="logo-dot"></div>
+                <div class="logo-orb"></div>
                 <div>Aurora Query Studio</div>
             </div>
             <div class="top-nav-right">
                 <span class="status-pill">Beta</span>
-                <span class="status-text">Connected to PostgreSQL • Guarded by timeouts</span>
+                <span class="status-text">PostgreSQL • Guarded by timeouts</span>
             </div>
         </div>
         """,
@@ -513,14 +529,14 @@ def main():
         """
         <div class="hero-kicker">
             <span class="hero-kicker-dot"></span>
-            Natural language to SQL, in one workspace
+            Natural language → SQL, in one glass workspace
         </div>
         """,
         unsafe_allow_html=True,
     )
     st.markdown("<div class='brand-title'>Aurora Query Studio</div>", unsafe_allow_html=True)
     st.markdown(
-        "<p class='brand-subtitle'>Describe the insight you want. Aurora turns it into audited SQL you can inspect, refine, and run with guardrails.</p>",
+        "<p class='brand-subtitle'>Describe the insight you want. Aurora turns it into audited SQL you can inspect, refine, and run with built-in guardrails.</p>",
         unsafe_allow_html=True,
     )
 
@@ -543,7 +559,7 @@ def main():
             st.session_state.logged_in = False
             st.rerun()
 
-    # Init state
+    # State
     if "query_history" not in st.session_state:
         st.session_state.query_history = []
     if "generated_sql" not in st.session_state:
@@ -553,18 +569,19 @@ def main():
 
     # Workspace card
     st.markdown("<div class='app-shell'><div class='app-shell-inner'>", unsafe_allow_html=True)
-    left, right = st.columns([1.85, 1], gap="large")
+    left, right = st.columns([1.9, 1], gap="large")
 
     # LEFT: question + SQL + results
     with left:
         st.markdown("<div class='section-title'>Your question</div>", unsafe_allow_html=True)
         st.markdown(
-            "<div class='section-caption'>Write in plain language. You can mention products, regions, time ranges, and metrics.</div>",
+            "<div class='section-caption'>Write in plain language. Mention products, regions, time ranges, and metrics.</div>",
             unsafe_allow_html=True,
         )
+
         user_question = st.text_area(
             label="",
-            height=110,
+            height=120,
             placeholder="e.g., Show revenue and order count by product category for the last 90 days.",
         )
 
@@ -588,16 +605,16 @@ def main():
             st.session_state.current_question = None
 
         if generate_button and user_question:
-            user_question = user_question.strip()
-            if st.session_state.current_question != user_question:
+            question = user_question.strip()
+            if st.session_state.current_question != question:
                 st.session_state.generated_sql = None
                 st.session_state.current_question = None
 
             with st.spinner("🧠 Composing SQL…"):
-                sql_query = generate_sql_with_gpt(user_question)
+                sql_query = generate_sql_with_gpt(question)
                 if sql_query:
                     st.session_state.generated_sql = sql_query
-                    st.session_state.current_question = user_question
+                    st.session_state.current_question = question
 
         if st.session_state.generated_sql:
             st.markdown("---")
