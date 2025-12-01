@@ -25,66 +25,64 @@ st.markdown(
     <style>
         @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
-        /* Global */
+        /* ---------- GLOBAL ---------- */
         html, body, [class*="css"] {
             font-family: 'SF Pro Display', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
-            background: radial-gradient(circle at top, #050816 0, #020617 55%, #000000 100%);
-            color: #e5e7eb;
+            background: #f5f5f7;
+            color: #111827;
         }
 
         .block-container {
-            padding: 1.8rem 2rem 3rem;
-            max-width: 1350px;
+            padding: 1.8rem 2.5rem 3rem;
+            max-width: 1300px;
         }
 
-        /* Brand header */
+        /* ---------- BRAND HEADER ---------- */
         .brand-title {
-            font-size: 32px;
+            font-size: 34px;
             font-weight: 650;
-            letter-spacing: -0.035em;
-            background: linear-gradient(120deg, #e5e7eb, #bfdbfe, #a5b4fc);
-            -webkit-background-clip: text;
-            color: transparent;
+            letter-spacing: -0.045em;
+            color: #111827;
         }
 
         .brand-subtitle {
-            color: #9ca3af;
-            font-size: 14.5px;
-            max-width: 620px;
+            color: #4b5563;
+            font-size: 15px;
+            max-width: 640px;
+            margin-top: 0.25rem;
         }
 
-        /* Main glass shell */
+        /* ---------- MAIN SHELL (APPLE-LIKE CARD) ---------- */
         .app-shell {
-            margin-top: 1.7rem;
-            border-radius: 26px;
+            margin-top: 2rem;
+            border-radius: 32px;
             padding: 1px;
-            background: linear-gradient(135deg, rgba(148, 163, 184, 0.7), rgba(37, 99, 235, 0.7));
-            box-shadow: 0 34px 80px rgba(15, 23, 42, 0.8);
+            background: linear-gradient(135deg, rgba(209, 213, 219, 0.9), rgba(148, 163, 184, 0.9));
         }
 
         .app-shell-inner {
-            border-radius: 24px;
-            background: radial-gradient(circle at top left, #020617 0, #020617 60%, #020617 100%);
-            padding: 22px 24px 24px;
+            border-radius: 30px;
+            background: #ffffff;
+            padding: 24px 26px 26px;
+            box-shadow: 0 30px 60px rgba(15, 23, 42, 0.10);
         }
 
-        /* Sections */
         .section-title {
             font-size: 15px;
             font-weight: 600;
-            margin-bottom: 0.15rem;
-            color: #f9fafb;
+            margin-bottom: 0.1rem;
+            color: #111827;
         }
 
         .section-caption {
             font-size: 13px;
-            color: #9ca3af;
-            margin-bottom: 0.7rem;
+            color: #6b7280;
+            margin-bottom: 0.75rem;
         }
 
         .side-card {
-            background: #020617;
-            border: 1px solid rgba(148, 163, 184, 0.55);
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
             border-radius: 16px;
             padding: 12px 14px;
             margin-bottom: 0.7rem;
@@ -100,80 +98,83 @@ st.markdown(
         .metric-value {
             font-size: 20px;
             font-weight: 600;
-            color: #f9fafb;
+            color: #111827;
         }
 
-        /* Inputs */
+        /* ---------- TEXT INPUTS ---------- */
         .stTextArea textarea {
             border-radius: 16px !important;
-            border: 1px solid #4b5563 !important;
-            background: #020617 !important;
-            color: #e5e7eb !important;
+            border: 1px solid #d1d5db !important;
+            background: #f9fafb !important;
+            color: #111827 !important;
             font-size: 15px !important;
         }
 
         .stTextArea textarea::placeholder {
-            color: #6b7280 !important;
+            color: #9ca3af !important;
         }
 
         .stTextInput input {
             border-radius: 14px !important;
-            border: 1px solid #4b5563 !important;
-            background: #020617 !important;
-            color: #e5e7eb !important;
+            border: 1px solid #d1d5db !important;
+            background: #f9fafb !important;
+            color: #111827 !important;
         }
 
         .stTextInput input::placeholder {
-            color: #6b7280 !important;
+            color: #9ca3af !important;
         }
 
-        /* Buttons */
+        /* ---------- BUTTONS (APPLE-LIKE PRIMARY BLUE) ---------- */
         .btn-primary button {
-            background: linear-gradient(135deg, #0ea5e9, #6366f1);
+            background: #0071e3;
             border: none;
-            color: #f9fafb;
+            color: #ffffff;
             font-weight: 600;
             border-radius: 999px;
-            padding: 0.45rem 1.1rem;
-            box-shadow: 0 16px 32px rgba(37, 99, 235, 0.5);
+            padding: 0.45rem 1.35rem;
+            box-shadow: 0 12px 24px rgba(0, 113, 227, 0.30);
         }
         .btn-primary button:hover {
-            filter: brightness(1.08);
+            background: #005bb5;
         }
 
         .btn-secondary button {
-            background: transparent;
-            color: #e5e7eb;
+            background: #f3f4f6;
+            color: #111827;
             border-radius: 999px;
-            border: 1px solid #4b5563;
+            border: 1px solid #d1d5db;
             font-weight: 500;
         }
+        .btn-secondary button:hover {
+            background: #e5e7eb;
+        }
 
-        /* Sidebar */
+        /* ---------- SIDEBAR ---------- */
         [data-testid="stSidebar"] {
-            background: #020617 !important;
-            border-right: 1px solid rgba(15, 23, 42, 0.95);
+            background: #f5f5f7 !important;
+            border-right: 1px solid #e5e7eb;
         }
         [data-testid="stSidebar"] * {
-            color: #e5e7eb !important;
+            color: #111827 !important;
         }
         [data-testid="stSidebar"] .stButton button {
             width: 100%;
             border-radius: 999px;
-            border: 1px solid #4b5563;
-            background: #020617;
-            color: #e5e7eb;
+            border: 1px solid #d1d5db;
+            background: #ffffff;
+            color: #111827;
             font-weight: 500;
         }
         [data-testid="stSidebar"] .stButton button:hover {
-            border-color: #0ea5e9;
+            background: #f3f4f6;
         }
 
-        /* Code blocks */
+        /* ---------- CODE BLOCKS ---------- */
         .stCode pre {
             border-radius: 14px !important;
-            border: 1px solid rgba(148, 163, 184, 0.55) !important;
-            background: #020617 !important;
+            border: 1px solid #e5e7eb !important;
+            background: #0f172a !important;
             color: #e5e7eb !important;
             font-size: 13px !important;
         }
@@ -409,7 +410,7 @@ def main():
     if "current_question" not in st.session_state:
         st.session_state.current_question = None
 
-    # One big glass card for the whole workspace
+    # One big clean card for workspace
     st.markdown("<div class='app-shell'><div class='app-shell-inner'>", unsafe_allow_html=True)
     left, right = st.columns([1.85, 1], gap="large")
 
@@ -417,12 +418,12 @@ def main():
     with left:
         st.markdown("<div class='section-title'>Your question</div>", unsafe_allow_html=True)
         st.markdown(
-            "<div class='section-caption'>Write in plain English. You can mention products, regions, time ranges, and metrics.</div>",
+            "<div class='section-caption'>Write in plain language. You can mention products, regions, time ranges, and metrics.</div>",
             unsafe_allow_html=True,
         )
         user_question = st.text_area(
             label="",
-            height=120,
+            height=110,
             placeholder="e.g., Show revenue and order count by product category for the last 90 days.",
         )
 
