@@ -25,9 +25,10 @@ st.markdown(
     <style>
         @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
+        /* Global */
         html, body, [class*="css"] {
             font-family: 'SF Pro Display', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
-            background: radial-gradient(circle at top, #0b1220 0, #020617 55%, #020617 100%);
+            background: radial-gradient(circle at top, #050816 0, #020617 55%, #000000 100%);
             color: #e5e7eb;
         }
 
@@ -41,7 +42,7 @@ st.markdown(
             font-size: 32px;
             font-weight: 650;
             letter-spacing: -0.035em;
-            background: linear-gradient(120deg, #e5e7eb, #c7d2fe, #a5b4fc);
+            background: linear-gradient(120deg, #e5e7eb, #bfdbfe, #a5b4fc);
             -webkit-background-clip: text;
             color: transparent;
         }
@@ -54,24 +55,25 @@ st.markdown(
 
         /* Main glass shell */
         .app-shell {
-            margin-top: 1.5rem;
+            margin-top: 1.7rem;
             border-radius: 26px;
             padding: 1px;
-            background: linear-gradient(135deg, rgba(94, 234, 212, 0.45), rgba(129, 140, 248, 0.55));
-            box-shadow: 0 40px 80px rgba(15, 23, 42, 0.7);
+            background: linear-gradient(135deg, rgba(148, 163, 184, 0.7), rgba(37, 99, 235, 0.7));
+            box-shadow: 0 34px 80px rgba(15, 23, 42, 0.8);
         }
 
         .app-shell-inner {
             border-radius: 24px;
-            background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
+            background: radial-gradient(circle at top left, #020617 0, #020617 60%, #020617 100%);
             padding: 22px 24px 24px;
         }
 
-        /* Panels inside shell */
+        /* Sections */
         .section-title {
             font-size: 15px;
             font-weight: 600;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.15rem;
+            color: #f9fafb;
         }
 
         .section-caption {
@@ -81,60 +83,69 @@ st.markdown(
         }
 
         .side-card {
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: #020617;
+            border: 1px solid rgba(148, 163, 184, 0.55);
             border-radius: 16px;
             padding: 12px 14px;
-            margin-bottom: 0.6rem;
+            margin-bottom: 0.7rem;
         }
 
         .metric-label {
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.08em;
-            color: #94a3b8;
+            color: #9ca3af;
         }
 
         .metric-value {
             font-size: 20px;
             font-weight: 600;
+            color: #f9fafb;
         }
 
         /* Inputs */
         .stTextArea textarea {
-            border-radius: 18px !important;
-            border: 1px solid rgba(148, 163, 184, 0.7) !important;
-            background: rgba(15, 23, 42, 0.97) !important;
+            border-radius: 16px !important;
+            border: 1px solid #4b5563 !important;
+            background: #020617 !important;
             color: #e5e7eb !important;
             font-size: 15px !important;
         }
 
+        .stTextArea textarea::placeholder {
+            color: #6b7280 !important;
+        }
+
         .stTextInput input {
             border-radius: 14px !important;
-            border: 1px solid rgba(148, 163, 184, 0.7) !important;
-            background: rgba(15, 23, 42, 0.97) !important;
+            border: 1px solid #4b5563 !important;
+            background: #020617 !important;
             color: #e5e7eb !important;
+        }
+
+        .stTextInput input::placeholder {
+            color: #6b7280 !important;
         }
 
         /* Buttons */
         .btn-primary button {
-            background: linear-gradient(135deg, #2563eb, #4f46e5);
+            background: linear-gradient(135deg, #0ea5e9, #6366f1);
             border: none;
             color: #f9fafb;
             font-weight: 600;
             border-radius: 999px;
             padding: 0.45rem 1.1rem;
-            box-shadow: 0 16px 30px rgba(37, 99, 235, 0.45);
+            box-shadow: 0 16px 32px rgba(37, 99, 235, 0.5);
         }
         .btn-primary button:hover {
             filter: brightness(1.08);
         }
 
         .btn-secondary button {
-            background: rgba(15, 23, 42, 0.9);
+            background: transparent;
             color: #e5e7eb;
             border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.6);
+            border: 1px solid #4b5563;
             font-weight: 500;
         }
 
@@ -149,19 +160,19 @@ st.markdown(
         [data-testid="stSidebar"] .stButton button {
             width: 100%;
             border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.6);
-            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #4b5563;
+            background: #020617;
             color: #e5e7eb;
             font-weight: 500;
         }
         [data-testid="stSidebar"] .stButton button:hover {
-            border-color: #38bdf8;
+            border-color: #0ea5e9;
         }
 
         /* Code blocks */
         .stCode pre {
             border-radius: 14px !important;
-            border: 1px solid rgba(148, 163, 184, 0.4) !important;
+            border: 1px solid rgba(148, 163, 184, 0.55) !important;
             background: #020617 !important;
             color: #e5e7eb !important;
             font-size: 13px !important;
