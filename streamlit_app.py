@@ -17,40 +17,25 @@ STATEMENT_TIMEOUT_MS = 15_000
 LOCK_TIMEOUT_MS = 3_000
 CONNECT_TIMEOUT_S = 5
 
-st.set_page_config(
-    page_title="SQL Copilot",
-    page_icon="🤖",
-    layout="wide",
-)
+st.set_page_config(page_title="SQL Copilot", page_icon="🧭", layout="wide")
 
-# Global style: bold, modern aesthetic
+# Global style: clean, editorial aesthetic
 st.markdown(
     """
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-        html, body, [class*="css"]  {
-            font-family: 'Space Grotesk', sans-serif !important;
-            background: radial-gradient(circle at 20% 20%, #111827, #0b0f19);
-            color: #e5e7eb;
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
+        html, body, [class*="css"] {
+            font-family: 'Manrope', system-ui, -apple-system, sans-serif !important;
+            background: radial-gradient(120% 120% at 10% 20%, #f6f7fb 0%, #e9ecf7 35%, #dfe4f0 60%, #d7dceb 100%);
+            color: #0f172a;
         }
-        .block-container {
-            padding-top: 2rem;
-            padding-bottom: 2rem;
-            max-width: 1200px;
-        }
-        .stTextArea textarea {
-            border-radius: 14px;
-            border: 1px solid #2d2f3a;
-            background: #0f1624;
-            color: #e5e7eb;
-            font-size: 16px;
-        }
-        .glass {
-            background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-            border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 20px 70px rgba(0,0,0,0.35);
-            border-radius: 20px;
-            padding: 24px;
+        .block-container {padding: 1.5rem 1.5rem 3rem; max-width: 1250px;}
+        .panel {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 18px 20px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
         }
         .pill {
             display: inline-flex;
@@ -58,36 +43,56 @@ st.markdown(
             gap: 8px;
             padding: 8px 12px;
             border-radius: 999px;
-            background: #1f2937;
-            border: 1px solid rgba(255,255,255,0.05);
-            color: #9ca3af;
+            background: #0f172a;
+            color: #f8fafc;
             font-size: 13px;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.01em;
         }
-        .headline {
-            font-size: 32px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            color: #f9fafb;
-        }
-        .subhead {
-            color: #9ca3af;
+        .headline {font-size: 30px; font-weight: 700; letter-spacing: -0.02em; color: #0f172a;}
+        .subhead {color: #475569; font-size: 16px;}
+        .stTextArea textarea {
+            border-radius: 14px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #0f172a;
             font-size: 16px;
         }
-        .code-box {
-            background: #0f172a;
-            border-radius: 14px;
-            padding: 16px;
-            border: 1px solid rgba(255,255,255,0.05);
+        .btn-primary button {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            border-radius: 12px;
+        }
+        .btn-secondary button {
+            background: #e2e8f0;
+            color: #0f172a;
+            border: none;
+            font-weight: 600;
+            border-radius: 12px;
         }
         .metric-card {
-            background: linear-gradient(135deg, #111827, #0b1220);
-            border: 1px solid rgba(255,255,255,0.04);
-            border-radius: 16px;
-            padding: 16px 18px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px;
+        }
+        .stCode pre {
+            border-radius: 14px !important;
+            border: 1px solid #e5e7eb !important;
+            background: #0b1220 !important;
+            color: #e5e7eb !important;
         }
         .sidebar .sidebar-content {
-            background: #0b0f19 !important;
+            background: #0f172a !important;
+            color: #e2e8f0 !important;
+        }
+        .sidebar .stButton button {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid #1e293b;
+            background: #111827;
+            color: #e2e8f0;
         }
     </style>
     """,
@@ -266,27 +271,26 @@ Generate the SQL query:"""
 
 def main():
     require_login()
-    st.markdown("<p class='pill'>AI SQL Copilot</p>", unsafe_allow_html=True)
+    st.markdown("<p class='pill'>SQL Copilot</p>", unsafe_allow_html=True)
     st.markdown("<div class='headline'>Ask. Inspect. Execute.</div>", unsafe_allow_html=True)
-    st.markdown("<p class='subhead'>Craft crisp questions, review generated SQL, and run it with guardrails.</p>", unsafe_allow_html=True)
+    st.markdown("<p class='subhead'>Craft concise prompts, audit the SQL, then run with built-in guardrails.</p>", unsafe_allow_html=True)
 
-    st.sidebar.title("🧭 Navigator")
-    st.sidebar.markdown("**Quick Prompts**")
-    st.sidebar.markdown(
-        """
-        • Top 10 products by revenue  
-        • Order volume trend by month  
-        • Customers by region & country  
-        • Gross margin by product category  
-        • Repeat buyers by city  
-        """)
-    st.sidebar.markdown("---")
-    st.sidebar.info(
-        "Tip: Keep questions precise. Limit scope (top 20, latest month) to stay fast."
-    )
-    if st.sidebar.button("🚪 Logout"):
-        st.session_state.logged_in = False
-        st.rerun()
+    with st.sidebar:
+        st.header("🧭 Navigator")
+        st.caption("Quick prompts")
+        st.markdown(
+            """
+            • Top 10 products by revenue  
+            • Order volume trend by month  
+            • Customers by region & country  
+            • Gross margin by product category  
+            • Repeat buyers by city  
+            """)
+        st.divider()
+        st.info("Tip: keep scope tight (e.g., top 20, last 90 days) for faster results.")
+        if st.button("Logout"):
+            st.session_state.logged_in = False
+            st.rerun()
 
     # Init state
     if 'query_history' not in st.session_state:
@@ -297,10 +301,10 @@ def main():
         st.session_state.current_question = None
 
     # Layout
-    left, right = st.columns([2.4, 1.2], gap="large")
+    left, right = st.columns([1.75, 1], gap="large")
 
     with left:
-        st.markdown("<div class='glass'>", unsafe_allow_html=True)
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.markdown("#### Your question")
         user_question = st.text_area(
             label="",
@@ -310,9 +314,9 @@ def main():
 
         action_cols = st.columns([1, 1, 3])
         with action_cols[0]:
-            generate_button = st.button("⚡ Generate SQL", type="primary", use_container_width=True)
+            generate_button = st.button("⚡ Generate SQL", type="primary", use_container_width=True, key="gen_sql_btn")
         with action_cols[1]:
-            clear_button = st.button("🧹 Clear", use_container_width=True)
+            clear_button = st.button("🧹 Clear", use_container_width=True, key="clear_btn")
 
         if clear_button:
             st.session_state.query_history = []
@@ -332,7 +336,7 @@ def main():
                     st.session_state.current_question = user_question
 
         if st.session_state.generated_sql:
-            st.markdown("---")
+            st.divider()
             st.markdown("#### Generated SQL")
             st.caption(f"Question: {st.session_state.current_question}")
 
@@ -342,7 +346,7 @@ def main():
                 height=220,
             )
 
-            run_button = st.button("▶️ Run Query", type="primary", use_container_width=True)
+            run_button = st.button("▶️ Run Query", type="primary", use_container_width=True, key="run_btn")
 
             if run_button:
                 with st.spinner("Executing query ..."):
@@ -359,7 +363,7 @@ def main():
         st.markdown("</div>", unsafe_allow_html=True)
 
     with right:
-        st.markdown("<div class='glass'>", unsafe_allow_html=True)
+        st.markdown("<div class='panel'>", unsafe_allow_html=True)
         st.markdown("#### Workspace Stats")
         stat_cols = st.columns(2)
         stat_cols[0].metric("Default LIMIT", QUERY_DEFAULT_LIMIT)
