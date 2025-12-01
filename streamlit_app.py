@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import os
 import bcrypt
+import re
 
 
 load_dotenv()  # reads variables from a .env file and sets them in os.environ
@@ -13,60 +14,36 @@ load_dotenv()  # reads variables from a .env file and sets them in os.environ
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 HASHED_PASSWORD = st.secrets["HASHED_PASSWORD"].encode("utf-8")
 
+QUERY_DEFAULT_LIMIT = 500
+STATEMENT_TIMEOUT_MS = 15_000
+LOCK_TIMEOUT_MS = 3_000
+CONNECT_TIMEOUT_S = 5
+
 
 # Database schema for context
 DATABASE_SCHEMA = """
 Database Schema:
 
-LOOKUP TABLES:
-- genders (gender_id SERIAL PRIMARY KEY, gender_desc TEXT)
-- races (race_id SERIAL PRIMARY KEY, race_desc TEXT)
-- marital_statuses (marital_status_id SERIAL PRIMARY KEY, marital_status_desc TEXT)
-- languages (language_id SERIAL PRIMARY KEY, language_desc TEXT)
-- lab_units (unit_id SERIAL PRIMARY KEY, unit_string TEXT)
-- lab_tests (lab_test_id SERIAL PRIMARY KEY, lab_name TEXT, unit_id INTEGER)
-- diagnosis_codes (diagnosis_code TEXT PRIMARY KEY, diagnosis_description TEXT)
+LOOKUP / DIMENSIONS:
+- Region(RegionID SERIAL PRIMARY KEY, Region TEXT UNIQUE)
+- Country(CountryID SERIAL PRIMARY KEY, Country TEXT UNIQUE, RegionID INTEGER FK -> Region)
+- ProductCategory(ProductCategoryID SERIAL PRIMARY KEY, ProductCategory TEXT UNIQUE, ProductCategoryDescription TEXT)
+- Product(ProductID SERIAL PRIMARY KEY, ProductName TEXT UNIQUE, ProductUnitPrice REAL, ProductCategoryID INTEGER FK -> ProductCategory)
 
 CORE TABLES:
-- patients (
-    patient_id TEXT PRIMARY KEY,
-    patient_gender INTEGER (FK to genders),
-    patient_dob TIMESTAMP,
-    patient_race INTEGER (FK to races),
-    patient_marital_status INTEGER (FK to marital_statuses),
-    patient_language INTEGER (FK to languages),
-    patient_population_pct_below_poverty REAL
-  )
+- Customer(CustomerID SERIAL PRIMARY KEY, FirstName TEXT, LastName TEXT, Address TEXT, City TEXT, CountryID INTEGER FK -> Country)
+- OrderDetail(OrderID SERIAL PRIMARY KEY, CustomerID INTEGER FK -> Customer, ProductID INTEGER FK -> Product, OrderDate DATE, QuantityOrdered INTEGER)
 
-- admissions (
-    patient_id TEXT,
-    admission_id INTEGER,
-    admission_start TIMESTAMP,
-    admission_end TIMESTAMP,
-    PRIMARY KEY (patient_id, admission_id)
-  )
+Helpful joins:
+- Country joins Region via Country.RegionID
+- Customer joins Country via Customer.CountryID
+- OrderDetail joins Customer and Product via their IDs
+- Product joins ProductCategory via ProductCategoryID
 
-- admission_primary_diagnoses (
-    patient_id TEXT,
-    admission_id INTEGER,
-    diagnosis_code TEXT (FK to diagnosis_codes),
-    PRIMARY KEY (patient_id, admission_id)
-  )
-
-- admission_lab_results (
-    patient_id TEXT,
-    admission_id INTEGER,
-    lab_test_id INTEGER (FK to lab_tests),
-    lab_value REAL,
-    lab_datetime TIMESTAMP
-  )
-
-IMPORTANT NOTES:
-- Use JOINs to get descriptive values from lookup tables
-- patient_dob, admission_start, admission_end, and lab_datetime are TIMESTAMP types
-- To calculate age: EXTRACT(YEAR FROM AGE(patient_dob))
-- To calculate length of stay: EXTRACT(EPOCH FROM (admission_end - admission_start)) / 86400 (gives days)
-- Always use proper JOINs for foreign key relationships
+Common calculations:
+- Total revenue: SUM(QuantityOrdered * ProductUnitPrice)
+- Order counts: COUNT(DISTINCT OrderID) or COUNT(*)
+- Date filters: OrderDate is a DATE column
 """
 
 
@@ -131,20 +108,40 @@ def get_db_connection():
 
     """Create and cache database connection."""
     try:
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = psycopg2.connect(DATABASE_URL, connect_timeout=CONNECT_TIMEOUT_S)
+        conn.set_session(autocommit=True)
+        with conn.cursor() as cur:
+            cur.execute("SET statement_timeout = %s;", (STATEMENT_TIMEOUT_MS,))
+            cur.execute("SET lock_timeout = %s;", (LOCK_TIMEOUT_MS,))
+            cur.execute("SET idle_in_transaction_session_timeout = %s;", (LOCK_TIMEOUT_MS * 10,))
         return conn
     except Exception as e:
         st.error(f"Failed to connect to database: {e}")
         return None
-    
+
+def _ensure_limit(sql, default_limit=QUERY_DEFAULT_LIMIT):
+    """Append a LIMIT if one is not present to keep queries fast/safe."""
+    # crude check for existing LIMIT
+    pattern = re.compile(r"\blimit\b", re.IGNORECASE)
+    if pattern.search(sql):
+        return sql.strip()
+
+    stripped = sql.strip().rstrip(";")
+    return f"{stripped}\nLIMIT {default_limit};"
+
+
 def run_query(sql):
     """Execute SQL query and return results as DataFrame."""
     conn = get_db_connection()
     if conn is None:
         return None
-    
+
+    safe_sql = _ensure_limit(sql)
+    if safe_sql != sql:
+        st.info(f"Added LIMIT {QUERY_DEFAULT_LIMIT} to keep the query responsive.")
+
     try:
-        df = pd.read_sql_query(sql, conn)
+        df = pd.read_sql_query(safe_sql, conn)
         return df
     except Exception as e:
         st.error(f"Error executing query: {e}")
@@ -209,11 +206,14 @@ def main():
     st.sidebar.markdown("""
     Try asking questions like:
                         
-    **Demographics:**
-    - How many patients do we have by gender?
+    **Customers & Regions:**
+    - Customer counts by country and region
+    - Top 10 cities by number of customers
                         
-    **Admissions:**
-    - What is the average length of stay?                      
+    **Orders & Revenue:**
+    - Total revenue by product category
+    - Daily order counts over time
+    - Best selling products by quantity
     """)
     st.sidebar.markdown("---")
     st.sidebar.info("""
@@ -311,9 +311,9 @@ def main():
         st.subheader("📜 Query History")
         for idx, item in enumerate(reversed(st.session_state.query_history[-5:])):
             with st.expander(f"Query {len(st.session_state.query_history)-idx}: {item['question'][:60]}..."):
-                st.markdown(f"**Question:** {item["question"]}")
+                st.markdown(f"**Question:** {item['question']}")
                 st.code(item["sql"], language="sql")
-                st.caption(f"Returned {item["rows"]} rows")
+                st.caption(f"Returned {item['rows']} rows")
                 if st.button(f"Re-run this query", key=f"rerun_{idx}"):
                     df = run_query(item["sql"])
                     if df is not None:

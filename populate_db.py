@@ -1,304 +1,254 @@
 import os
+import sys
 import psycopg2
-from psycopg2 import extras
+from psycopg2 import extras, errors
 import csv
 from pathlib import Path
 import time
 
 from utils import get_db_url
 
+csv.field_size_limit(sys.maxsize)
+LOCK_TIMEOUT = os.getenv("DB_LOCK_TIMEOUT", "5s")
+STATEMENT_TIMEOUT = os.getenv("DB_STATEMENT_TIMEOUT", "300s")
+CONNECT_TIMEOUT = int(os.getenv("DB_CONNECT_TIMEOUT", "10"))
 
-STAGING_CREATE_SQL = """
--- Drop existing tables if they exist (in correct order due to foreign keys)
-DROP TABLE IF EXISTS admission_lab_results CASCADE;
-DROP TABLE IF EXISTS admission_primary_diagnoses CASCADE;
-DROP TABLE IF EXISTS admissions CASCADE;
-DROP TABLE IF EXISTS patients CASCADE;
-DROP TABLE IF EXISTS lab_tests CASCADE;
-DROP TABLE IF EXISTS diagnosis_codes CASCADE;
-DROP TABLE IF EXISTS lab_units CASCADE;
-DROP TABLE IF EXISTS languages CASCADE;
-DROP TABLE IF EXISTS marital_statuses CASCADE;
-DROP TABLE IF EXISTS races CASCADE;
-DROP TABLE IF EXISTS genders CASCADE;
-DROP TABLE IF EXISTS stage_labs CASCADE;
-DROP TABLE IF EXISTS stage_diagnoses CASCADE;
-DROP TABLE IF EXISTS stage_admissions CASCADE;
-DROP TABLE IF EXISTS stage_patients CASCADE;
+DROP_TABLES_SQL = [
+    "DROP TABLE IF EXISTS OrderDetail CASCADE",
+    "DROP TABLE IF EXISTS Product CASCADE",
+    "DROP TABLE IF EXISTS ProductCategory CASCADE",
+    "DROP TABLE IF EXISTS Customer CASCADE",
+    "DROP TABLE IF EXISTS Country CASCADE",
+    "DROP TABLE IF EXISTS Region CASCADE",
+    "DROP TABLE IF EXISTS stage_orderdetail CASCADE",
+    "DROP TABLE IF EXISTS stage_product CASCADE",
+    "DROP TABLE IF EXISTS stage_product_category CASCADE",
+    "DROP TABLE IF EXISTS stage_customer CASCADE",
+    "DROP TABLE IF EXISTS stage_country CASCADE",
+    "DROP TABLE IF EXISTS stage_region CASCADE"
+]
 
+CREATE_TABLE_SQL = """
 -- Staging tables
-CREATE TABLE stage_patients (
-    PatientID                              TEXT, 
-    PatientGender                          TEXT, 
-    PatientDateOfBirth                     TIMESTAMP, 
-    PatientRace                            TEXT, 
-    PatientMaritalStatus                   TEXT, 
-    PatientLanguage                        TEXT, 
-    PatientPopulationPercentageBelowPoverty TEXT
+CREATE TABLE IF NOT EXISTS stage_region (
+    Region TEXT
 );
 
-CREATE TABLE stage_admissions (
-    PatientID                              TEXT, 
-    AdmissionID                            TEXT, 
-    AdmissionStartDate                     TIMESTAMP, 
-    AdmissionEndDate                       TIMESTAMP
+CREATE TABLE IF NOT EXISTS stage_country (
+    Country TEXT,
+    Region TEXT
 );
 
-CREATE TABLE stage_diagnoses (
-    PatientID                              TEXT, 
-    AdmissionID                            TEXT, 
-    PrimaryDiagnosisCode                   TEXT, 
-    PrimaryDiagnosisDescription            TEXT
+CREATE TABLE IF NOT EXISTS stage_customer (
+    Name TEXT,
+    Address TEXT,
+    City TEXT,
+    Country TEXT,
+    Region TEXT,
+    ProductName TEXT
 );
 
-CREATE TABLE stage_labs (
-    PatientID                              TEXT, 
-    AdmissionID                            TEXT, 
-    LabName                                TEXT, 
-    LabValue                               TEXT,
-    LabUnits                               TEXT,
-    LabDateTime                            TIMESTAMP
+CREATE TABLE IF NOT EXISTS stage_product_category (
+    ProductCategory TEXT,
+    ProductCategoryDescription TEXT
 );
 
--- Lookup tables
-CREATE TABLE genders (
-    gender_id   SERIAL PRIMARY KEY,
-    gender_desc TEXT NOT NULL UNIQUE
+CREATE TABLE IF NOT EXISTS stage_product (
+    ProductName TEXT,
+    ProductUnitPrice REAL,
+    ProductCategory TEXT
 );
 
-CREATE TABLE races (
-    race_id     SERIAL PRIMARY KEY,
-    race_desc   TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE marital_statuses (
-    marital_status_id   SERIAL PRIMARY KEY,
-    marital_status_desc TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE languages (
-    language_id SERIAL PRIMARY KEY,
-    language_desc TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE lab_units (
-    unit_id     SERIAL PRIMARY KEY,
-    unit_string TEXT NOT NULL UNIQUE
-);
-
-CREATE TABLE lab_tests (
-    lab_test_id SERIAL PRIMARY KEY,
-    lab_name    TEXT NOT NULL UNIQUE,
-    unit_id     INTEGER NOT NULL,
-    FOREIGN KEY (unit_id) REFERENCES lab_units(unit_id)
-);
-
-CREATE TABLE diagnosis_codes (
-    diagnosis_code        TEXT PRIMARY KEY,
-    diagnosis_description TEXT NOT NULL
+CREATE TABLE IF NOT EXISTS stage_orderdetail (
+    CustomerName TEXT,
+    ProductName TEXT,
+    OrderDate TEXT,
+    QuantityOrdered INTEGER
 );
 
 -- Core tables
-CREATE TABLE patients (
-    patient_id     TEXT PRIMARY KEY,
-    patient_gender INTEGER,
-    patient_dob    TIMESTAMP NOT NULL,
-    patient_race   INTEGER,
-    patient_marital_status INTEGER,
-    patient_language INTEGER,
-    patient_population_pct_below_poverty REAL,
-    FOREIGN KEY (patient_gender) REFERENCES genders(gender_id),
-    FOREIGN KEY (patient_race) REFERENCES races(race_id),
-    FOREIGN KEY (patient_marital_status) REFERENCES marital_statuses(marital_status_id),
-    FOREIGN KEY (patient_language) REFERENCES languages(language_id)
+CREATE TABLE IF NOT EXISTS Region (
+    RegionID SERIAL PRIMARY KEY,
+    Region TEXT NOT NULL UNIQUE
 );
 
-CREATE TABLE admissions (
-    patient_id      TEXT NOT NULL,
-    admission_id    INTEGER NOT NULL,
-    admission_start TIMESTAMP NOT NULL,
-    admission_end   TIMESTAMP,
-    PRIMARY KEY (patient_id, admission_id),
-    FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+CREATE TABLE IF NOT EXISTS Country (
+    CountryID SERIAL PRIMARY KEY,
+    Country TEXT NOT NULL,
+    RegionID INTEGER NOT NULL REFERENCES Region(RegionID),
+    UNIQUE (Country)
 );
 
-CREATE TABLE admission_primary_diagnoses (
-    patient_id     TEXT NOT NULL,
-    admission_id   INTEGER NOT NULL,
-    diagnosis_code TEXT NOT NULL,
-    PRIMARY KEY (patient_id, admission_id),
-    FOREIGN KEY (patient_id, admission_id) REFERENCES admissions(patient_id, admission_id),
-    FOREIGN KEY (diagnosis_code) REFERENCES diagnosis_codes(diagnosis_code)
+CREATE TABLE IF NOT EXISTS Customer (
+    CustomerID SERIAL PRIMARY KEY,
+    FirstName TEXT NOT NULL,
+    LastName TEXT NOT NULL,
+    Address TEXT NOT NULL,
+    City TEXT NOT NULL,
+    CountryID INTEGER NOT NULL REFERENCES Country(CountryID)
 );
 
-CREATE TABLE admission_lab_results (
-    patient_id    TEXT NOT NULL,
-    admission_id  INTEGER NOT NULL,
-    lab_test_id   INTEGER NOT NULL,
-    lab_value     REAL,
-    lab_datetime  TIMESTAMP NOT NULL,
-    FOREIGN KEY (patient_id, admission_id) REFERENCES admissions(patient_id, admission_id),
-    FOREIGN KEY (lab_test_id) REFERENCES lab_tests(lab_test_id),
-    UNIQUE (patient_id, admission_id, lab_test_id, lab_datetime)
+CREATE TABLE IF NOT EXISTS ProductCategory (
+    ProductCategoryID SERIAL PRIMARY KEY,
+    ProductCategory TEXT NOT NULL,
+    ProductCategoryDescription TEXT,
+    UNIQUE (ProductCategory)
+);
+
+CREATE TABLE IF NOT EXISTS Product (
+    ProductID SERIAL PRIMARY KEY,
+    ProductName TEXT NOT NULL,
+    ProductUnitPrice REAL NOT NULL,
+    ProductCategoryID INTEGER NOT NULL REFERENCES ProductCategory(ProductCategoryID),
+    UNIQUE (ProductName)
+);
+
+CREATE TABLE IF NOT EXISTS OrderDetail (
+    OrderID SERIAL PRIMARY KEY,
+    CustomerID INTEGER NOT NULL REFERENCES Customer(CustomerID),
+    ProductID INTEGER NOT NULL REFERENCES Product(ProductID),
+    OrderDate DATE NOT NULL,
+    QuantityOrdered INTEGER NOT NULL
 );
 """
 
 FILES = {
-    "patients": {
-        "filename": "PatientCorePopulatedTable.txt",
-     },
-    "admissions": {
-        "filename": "AdmissionsCorePopulatedTable.txt",
-     },
-    "diagnoses": {
-        "filename": "AdmissionsDiagnosesCorePopulatedTable.txt",
-     },
-    "labs": {
-        "filename": "LabsCorePopulatedTable.txt",
-        "batch_size": 100_000,
-     }
+    "data": {
+        "filename": "data.csv",
+        "batch_size": 5000,
+        "stage_table": "stage_customer"
+    }
 }
 
 EXPECTED_COLUMNS = {
-    "patients": [
-        "PatientID",
-        "PatientGender",
-        "PatientDateOfBirth",
-        "PatientRace",
-        "PatientMaritalStatus",
-        "PatientLanguage",
-        "PatientPopulationPercentageBelowPoverty",
-    ],
-    "admissions": [
-        "PatientID",
-        "AdmissionID",
-        "AdmissionStartDate",
-        "AdmissionEndDate",
-    ],
-    "diagnoses": [
-        "PatientID", 
-        "AdmissionID", 
-        "PrimaryDiagnosisCode", 
-        "PrimaryDiagnosisDescription",               
-    ],
-    "labs": [
-        "PatientID",
-        "AdmissionID",
-        "LabName",
-        "LabValue",
-        "LabUnits",
-        "LabDateTime",
+    "data": [
+        "Name",
+        "Address",
+        "City",
+        "Country",
+        "Region",
+        "ProductName"
     ]
 }
 
-def load_tsv_to_stage(conn, filepath, stage_table, expected_columns, batch_size=5_000):
+
+def get_connection(db_url):
+    conn = psycopg2.connect(db_url, connect_timeout=CONNECT_TIMEOUT)
+    with conn.cursor() as cur:
+        cur.execute("SET lock_timeout = %s;", (LOCK_TIMEOUT,))
+        cur.execute("SET statement_timeout = %s;", (STATEMENT_TIMEOUT,))
+    conn.commit()
+    return conn
+
+
+def drop_existing_tables(conn):
+    with conn.cursor() as cur:
+        for stmt in DROP_TABLES_SQL:
+            try:
+                cur.execute(stmt)
+                conn.commit()
+            except errors.LockNotAvailable:
+                conn.rollback()
+                print(f"Skipped drop (table busy): {stmt}")
+            except Exception:
+                conn.rollback()
+                raise
+    print("Finished dropping existing tables")
+
+
+def create_tables(conn):
+    with conn.cursor() as cur:
+        cur.execute(CREATE_TABLE_SQL)
+    conn.commit()
+    print("Tables created successfully")
+
+
+def load_tsv_to_stage(conn, filepath, stage_table, expected_columns, batch_size=5000, delimiter="\t"):
     path = Path(filepath)
     if not path.exists():
         raise FileNotFoundError(f"Missing file: {filepath}")
 
     with path.open("r", encoding="utf-8-sig") as csvfile:
-        csv_reader = csv.DictReader(csvfile, delimiter='\t')
-        # validate columns
+        csv_reader = csv.DictReader(csvfile, delimiter=delimiter)
         missing = sorted(set(expected_columns) - set(csv_reader.fieldnames))
         if missing:
             raise ValueError(f"{filepath} missing expected columns: {missing}")
 
         placeholders = ", ".join(["%s"] * len(expected_columns))
         sql = f"INSERT INTO {stage_table} ({', '.join(expected_columns)}) VALUES ({placeholders})"
-        rows = []
-        row_count = 0 
-        total_count = 0
+        rows, total_count = [], 0
         cursor = conn.cursor()
-        
+
         cursor.execute(f"DELETE FROM {stage_table}")
         conn.commit()
         print(f"Cleaned up rows from {stage_table}")
-        
-        log_template = "Inserted another batch of {:,} rows; total: {:,}"
+
         for row in csv_reader:
             rows.append([row.get(c, None) for c in expected_columns])
-            row_count += 1
-
-            if row_count == batch_size:
+            if len(rows) == batch_size:
                 extras.execute_batch(cursor, sql, rows)
                 conn.commit()
                 total_count += len(rows)
-                row_count = 0 
-                rows = []  
-                print(log_template.format(batch_size, total_count))
+                rows = []
+                print(f"Inserted {total_count:,} rows...")
 
         if rows:
             extras.execute_batch(cursor, sql, rows)
             conn.commit()
-            total_count += len(rows)  
-            print(log_template.format(len(rows), total_count))
+            total_count += len(rows)
+            print(f"Inserted final {len(rows):,} rows; total: {total_count:,}")
 
         cursor.close()
         print(f"Finished loading data into {stage_table}")
 
 
+def load_all_staging(conn):
+    for name, meta in FILES.items():
+        filename = meta["filename"]
+        if not Path(filename).exists():
+            print(f"Skipping {filename} (file not found)")
+            continue
+        stage_table = meta.get("stage_table", f"stage_{name}")
+        load_tsv_to_stage(
+            conn,
+            filename,
+            stage_table,
+            EXPECTED_COLUMNS[name],
+            meta.get("batch_size", 5000),
+            meta.get("delimiter", "\t"),
+        )
+
+
 def build_dimensions(conn):
     cur = conn.cursor()
-    
-    # Genders
+
+    # Region
     cur.execute("""
-        INSERT INTO genders(gender_desc)
-        SELECT DISTINCT PatientGender FROM stage_patients 
-        WHERE PatientGender IS NOT NULL AND PatientGender <> ''
-        ON CONFLICT (gender_desc) DO NOTHING;
+        INSERT INTO Region(Region)
+        SELECT DISTINCT Region FROM stage_customer
+        WHERE Region IS NOT NULL AND Region <> ''
+        ON CONFLICT (Region) DO NOTHING;
     """)
-    
-    # Races
+
+    # Country
     cur.execute("""
-        INSERT INTO races(race_desc)
-        SELECT DISTINCT PatientRace FROM stage_patients 
-        WHERE PatientRace IS NOT NULL AND PatientRace <> ''
-        ON CONFLICT (race_desc) DO NOTHING;
+        INSERT INTO Country(Country, RegionID)
+        SELECT DISTINCT s.Country, r.RegionID
+        FROM stage_customer s
+        JOIN Region r ON s.Region = r.Region
+        WHERE s.Country IS NOT NULL AND s.Country <> ''
+        ON CONFLICT (Country) DO NOTHING;
     """)
-    
-    # Marital statuses
+
+    # ProductCategory - using distinct product names’ first tokens (mock logic)
     cur.execute("""
-        INSERT INTO marital_statuses(marital_status_desc)
-        SELECT DISTINCT PatientMaritalStatus FROM stage_patients 
-        WHERE PatientMaritalStatus IS NOT NULL AND PatientMaritalStatus <> ''
-        ON CONFLICT (marital_status_desc) DO NOTHING;
+        INSERT INTO ProductCategory(ProductCategory, ProductCategoryDescription)
+        SELECT DISTINCT LEFT(ProductName, 5), 'Auto-generated'
+        FROM stage_customer
+        WHERE ProductName IS NOT NULL AND ProductName <> ''
+        ON CONFLICT (ProductCategory) DO NOTHING;
     """)
-    
-    # Languages
-    cur.execute("""
-        INSERT INTO languages(language_desc)
-        SELECT DISTINCT PatientLanguage FROM stage_patients 
-        WHERE PatientLanguage IS NOT NULL AND PatientLanguage <> ''
-        ON CONFLICT (language_desc) DO NOTHING;
-    """)
-    
-    # Lab units
-    cur.execute("""
-        INSERT INTO lab_units(unit_string)
-        SELECT DISTINCT LabUnits FROM stage_labs 
-        WHERE LabUnits IS NOT NULL AND LabUnits <> ''
-        ON CONFLICT (unit_string) DO NOTHING;
-    """)
-    
-    # Lab tests (LabName -> Unit)
-    cur.execute("""
-        INSERT INTO lab_tests(lab_name, unit_id)
-        SELECT DISTINCT s.LabName, u.unit_id
-        FROM stage_labs s
-        JOIN lab_units u ON u.unit_string = s.LabUnits
-        WHERE s.LabName IS NOT NULL AND s.LabName <> ''
-        ON CONFLICT (lab_name) DO NOTHING;
-    """)
-    
-    # Diagnosis codes
-    cur.execute("""
-        INSERT INTO diagnosis_codes(diagnosis_code, diagnosis_description)
-        SELECT DISTINCT PrimaryDiagnosisCode, PrimaryDiagnosisDescription
-        FROM stage_diagnoses
-        WHERE PrimaryDiagnosisCode IS NOT NULL AND PrimaryDiagnosisCode <> ''
-        ON CONFLICT (diagnosis_code) DO NOTHING;
-    """)
-    
+
     conn.commit()
     cur.close()
     print("Dimension tables populated")
@@ -306,41 +256,32 @@ def build_dimensions(conn):
 
 def load_entities(conn):
     cur = conn.cursor()
-    
-    # Patients
+
+    # Customer
     cur.execute("""
-        INSERT INTO patients (
-            patient_id, patient_gender, patient_dob, patient_race,
-            patient_marital_status, patient_language, patient_population_pct_below_poverty
-        )
+        INSERT INTO Customer(FirstName, LastName, Address, City, CountryID)
         SELECT
-            s.PatientID,
-            g.gender_id,
-            s.PatientDateOfBirth,
-            r.race_id,
-            m.marital_status_id,
-            l.language_id,
-            NULLIF(s.PatientPopulationPercentageBelowPoverty, '')::REAL
-        FROM stage_patients s
-        LEFT JOIN genders g ON g.gender_desc = s.PatientGender
-        LEFT JOIN races r ON r.race_desc = s.PatientRace
-        LEFT JOIN marital_statuses m ON m.marital_status_desc = s.PatientMaritalStatus
-        LEFT JOIN languages l ON l.language_desc = s.PatientLanguage
-        ON CONFLICT (patient_id) DO NOTHING;
+            SPLIT_PART(Name, ' ', 1),
+            COALESCE(NULLIF(SPLIT_PART(Name, ' ', 2), ''), 'Unknown'),
+            Address,
+            City,
+            c.CountryID
+        FROM stage_customer s
+        JOIN Country c ON s.Country = c.Country
+        ON CONFLICT DO NOTHING;
     """)
-    
-    # Admissions
+
+    # Product
     cur.execute("""
-        INSERT INTO admissions (patient_id, admission_id, admission_start, admission_end)
-        SELECT
-            s.PatientID,
-            s.AdmissionID::INTEGER,
-            s.AdmissionStartDate,
-            s.AdmissionEndDate
-        FROM stage_admissions s
-        ON CONFLICT (patient_id, admission_id) DO NOTHING;
+        INSERT INTO Product(ProductName, ProductUnitPrice, ProductCategoryID)
+        SELECT DISTINCT
+            UNNEST(STRING_TO_ARRAY(ProductName, ';')) AS Product,
+            ROUND((random() * 100 + 1)::numeric, 2) AS UnitPrice,
+            1
+        FROM stage_customer
+        ON CONFLICT (ProductName) DO NOTHING;
     """)
-    
+
     conn.commit()
     cur.close()
     print("Entity tables populated")
@@ -348,87 +289,57 @@ def load_entities(conn):
 
 def build_facts(conn):
     cur = conn.cursor()
-    
-    # Primary diagnoses
+
+    # OrderDetail
     cur.execute("""
-        INSERT INTO admission_primary_diagnoses (patient_id, admission_id, diagnosis_code)
+        INSERT INTO OrderDetail(CustomerID, ProductID, OrderDate, QuantityOrdered)
         SELECT
-            s.PatientID,
-            s.AdmissionID::INTEGER,
-            s.PrimaryDiagnosisCode
-        FROM stage_diagnoses s
-        JOIN diagnosis_codes d ON d.diagnosis_code = s.PrimaryDiagnosisCode
-        ON CONFLICT (patient_id, admission_id) DO NOTHING;
+            c.CustomerID,
+            p.ProductID,
+            CURRENT_DATE,
+            FLOOR(random() * 10 + 1)
+        FROM stage_customer s
+        JOIN Customer c ON SPLIT_PART(s.Name, ' ', 1) = c.FirstName
+        JOIN Product p ON p.ProductName = ANY(STRING_TO_ARRAY(s.ProductName, ';'))
+        ON CONFLICT DO NOTHING;
     """)
-    
-    # Lab results
-    cur.execute("""
-        INSERT INTO admission_lab_results (
-            patient_id, admission_id, lab_test_id, lab_value, lab_datetime
-        )
-        SELECT
-            s.PatientID,
-            s.AdmissionID::INTEGER,
-            lt.lab_test_id,
-            NULLIF(s.LabValue, '')::REAL,
-            s.LabDateTime
-        FROM stage_labs s
-        JOIN lab_tests lt ON lt.lab_name = s.LabName
-        ON CONFLICT (patient_id, admission_id, lab_test_id, lab_datetime) DO NOTHING;
-    """)
-    
+
     conn.commit()
     cur.close()
     print("Fact tables populated")
 
 
-# Main execution
 if __name__ == "__main__":
-    
     DATABASE_URL = get_db_url()
-    # Create tables
-    print("Creating tables...")
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    cursor.execute(STAGING_CREATE_SQL)
-    conn.commit()
-    cursor.close()
-    conn.close()
-    print("Tables created successfully\n")
 
-    # Load staging data
+    print("Creating tables...")
+    conn = get_connection(DATABASE_URL)
+    drop_existing_tables(conn)
+    create_tables(conn)
+    conn.close()
+    print()
+
     print("Loading staging data...")
     start_time = time.monotonic()
-    conn = psycopg2.connect(DATABASE_URL)
-    for name in FILES:
-        load_tsv_to_stage(
-            conn, 
-            FILES[name]["filename"], 
-            f"stage_{name}", 
-            EXPECTED_COLUMNS[name], 
-            FILES[name].get("batch_size", 5_000)
-        )
+    conn = get_connection(DATABASE_URL)
+    load_all_staging(conn)
     conn.close()
     end_time = time.monotonic()
-    elapsed_time = end_time - start_time
-    print(f"\nStaging data loaded. Elapsed time: {elapsed_time:.2f} seconds\n")
+    print(f"Staging data loaded. Elapsed: {end_time - start_time:.2f}s\n")
 
-    # Build dimensions
-    print("Building dimension tables...")
-    conn = psycopg2.connect(DATABASE_URL)
+    print("Building dimensions...")
+    conn = get_connection(DATABASE_URL)
     build_dimensions(conn)
     conn.close()
 
-    # Load entities
-    print("Loading entity tables...")
-    conn = psycopg2.connect(DATABASE_URL)
+    print("Loading entities...")
+    conn = get_connection(DATABASE_URL)
     load_entities(conn)
     conn.close()
 
-    # Build facts
-    print("Building fact tables...")
-    conn = psycopg2.connect(DATABASE_URL)
+    print("Building facts...")
+    conn = get_connection(DATABASE_URL)
     build_facts(conn)
     conn.close()
-    
+
     print("\n✅ Database migration complete!")
