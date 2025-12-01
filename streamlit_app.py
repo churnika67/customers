@@ -424,12 +424,18 @@ def get_db_connection():
         st.error(f"Failed to connect to database: {e}")
         return None
 
-def _ensure_limit(sql, default_limit=QUERY_DEFAULT_LIMIT):
-    pattern = re.compile(r"\\blimit\\b", re.IGNORECASE)
+def _ensure_limit(sql: str, default_limit: int = QUERY_DEFAULT_LIMIT) -> str:
+    """
+    Append a LIMIT if one is not present to keep queries fast/safe.
+    Avoids adding a second LIMIT if the query already has one.
+    """
+    pattern = re.compile(r"\blimit\b", re.IGNORECASE)
     if pattern.search(sql):
+        # Already has LIMIT somewhere
         return sql.strip()
+
     stripped = sql.strip().rstrip(";")
-    return f"{stripped}\\nLIMIT {default_limit};"
+    return f"{stripped} LIMIT {default_limit}"
 
 def run_query(sql):
     conn = get_db_connection()
@@ -451,11 +457,21 @@ def run_query(sql):
 def get_openai_client():
     return OpenAI(api_key=OPENAI_API_KEY)
 
-def extract_sql_from_response(response_text):
-    clean_sql = re.sub(
-        r"^```sql\\s*|\\s*```$", "", response_text, flags=re.IGNORECASE | re.MULTILINE
-    ).strip()
-    return clean_sql
+def extract_sql_from_response(response_text: str) -> str:
+    """
+    Take the model response and return *only* the SQL query:
+    - Strip ```sql ... ``` fences if present
+    - Remove a leading 'sql ' prefix if it exists
+    """
+    # Remove fenced code block markers like ```sql ... ```
+    text = re.sub(r"```sql\s*|\s*```", "", response_text,
+                  flags=re.IGNORECASE).strip()
+
+    # Safety: if it still starts with 'sql ' (no backticks), drop that
+    if text.lower().startswith("sql "):
+        text = text[4:].lstrip()
+
+    return text
 
 def generate_sql_with_gpt(user_question):
     client = get_openai_client()
@@ -526,7 +542,7 @@ def main():
         """,
         unsafe_allow_html=True,
     )
-    st.markdown("<div class='brand-title'>Query Studio</div>", unsafe_allow_html=True)
+    st.markdown("<div class='brand-title'>Aurora Query Studio</div>", unsafe_allow_html=True)
     st.markdown(
         "<p class='brand-subtitle'>Describe the insight you want. Aurora turns it into audited SQL you can inspect, refine, and run with built-in guardrails.</p>",
         unsafe_allow_html=True,
