@@ -1,3 +1,5 @@
+# app.py
+
 import re
 import sqlite3
 import streamlit as st
@@ -11,7 +13,7 @@ OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 HASHED_PASSWORD = st.secrets["HASHED_PASSWORD"].encode("utf-8")
 
 QUERY_DEFAULT_LIMIT = 500
-# Just for display in the UI – SQLite doesn’t use these:
+# Just for display in the UI – SQLite doesn’t use these timeouts directly
 STATEMENT_TIMEOUT_MS = 15_000
 
 # ---------- PAGE CONFIG & GLOBAL STYLES ----------
@@ -219,7 +221,7 @@ st.markdown(
 
         .stTextArea textarea:focus,
         .stTextInput input:focus {
-            outline: none !important;
+            outline: none !Important;
             border-color: #38bdf8 !important;
             box-shadow: 0 0 0 1px #38bdf8, 0 16px 40px rgba(8, 47, 73, 0.9) !important;
             background: rgba(15, 23, 42, 1) !important;
@@ -399,9 +401,10 @@ def require_login():
 def get_db_connection():
     """
     Create and cache a connection to the local SQLite database.
+    check_same_thread=False lets Streamlit use it across threads.
     """
     try:
-        conn = sqlite3.connect("normalized.db")
+        conn = sqlite3.connect("normalized.db", check_same_thread=False)
         conn.row_factory = sqlite3.Row
         return conn
     except Exception as e:
@@ -414,7 +417,7 @@ def _ensure_limit(sql: str, default_limit: int = QUERY_DEFAULT_LIMIT) -> str:
     Append a LIMIT if one is not present to keep queries fast/safe.
     Avoids adding a second LIMIT if the query already has one.
     """
-    pattern = re.compile(r"\\blimit\\b", re.IGNORECASE)
+    pattern = re.compile(r"\blimit\b", re.IGNORECASE)
     if pattern.search(sql):
         return sql.strip()
 
@@ -454,9 +457,10 @@ def extract_sql_from_response(response_text: str) -> str:
     - Strip ```sql ... ``` fences if present
     - Remove a leading 'sql ' prefix if it exists
     """
-    text = re.sub(r"```sql\\s*|\\s*```", "", response_text,
-                  flags=re.IGNORECASE).strip()
+    # Remove fenced code block markers like ```sql ... ```
+    text = re.sub(r"```sql\s*|\s*```", "", response_text, flags=re.IGNORECASE).strip()
 
+    # Safety: if it still starts with 'sql ' (no backticks), drop that
     if text.lower().startswith("sql "):
         text = text[4:].lstrip()
 
