@@ -1,20 +1,21 @@
-# app.py
 
 import re
-import sqlite3
 import streamlit as st
 import pandas as pd
+import psycopg2
+from dotenv import load_dotenv
 from openai import OpenAI
 import bcrypt
 
-# ---------- SECRETS / CONSTANTS ----------
+load_dotenv()
 
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 HASHED_PASSWORD = st.secrets["HASHED_PASSWORD"].encode("utf-8")
 
 QUERY_DEFAULT_LIMIT = 500
-# Just for display in the UI – SQLite doesn’t use these timeouts directly
 STATEMENT_TIMEOUT_MS = 15_000
+LOCK_TIMEOUT_MS = 3_000
+CONNECT_TIMEOUT_S = 5
 
 # ---------- PAGE CONFIG & GLOBAL STYLES ----------
 
@@ -221,7 +222,7 @@ st.markdown(
 
         .stTextArea textarea:focus,
         .stTextInput input:focus {
-            outline: none !Important;
+            outline: none !important;
             border-color: #38bdf8 !important;
             box-shadow: 0 0 0 1px #38bdf8, 0 16px 40px rgba(8, 47, 73, 0.9) !important;
             background: rgba(15, 23, 42, 1) !important;
@@ -302,20 +303,20 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ---------- SCHEMA CONTEXT FOR GPT (SQLite) ----------
+# ---------- SCHEMA CONTEXT FOR GPT ----------
 
 DATABASE_SCHEMA = """
-Database Schema (SQLite):
+Database Schema:
 
 LOOKUP / DIMENSIONS:
-- Region(RegionID INTEGER PRIMARY KEY, Region TEXT NOT NULL)
-- Country(CountryID INTEGER PRIMARY KEY, Country TEXT NOT NULL, RegionID INTEGER REFERENCES Region(RegionID))
-- ProductCategory(ProductCategoryID INTEGER PRIMARY KEY, ProductCategory TEXT NOT NULL, ProductCategoryDescription TEXT)
-- Product(ProductID INTEGER PRIMARY KEY, ProductName TEXT NOT NULL, ProductUnitPrice REAL NOT NULL, ProductCategoryID INTEGER REFERENCES ProductCategory(ProductCategoryID))
+- Region(RegionID SERIAL PRIMARY KEY, Region TEXT UNIQUE)
+- Country(CountryID SERIAL PRIMARY KEY, Country TEXT UNIQUE, RegionID INTEGER FK -> Region)
+- ProductCategory(ProductCategoryID SERIAL PRIMARY KEY, ProductCategory TEXT UNIQUE, ProductCategoryDescription TEXT)
+- Product(ProductID SERIAL PRIMARY KEY, ProductName TEXT UNIQUE, ProductUnitPrice REAL, ProductCategoryID INTEGER FK -> ProductCategory)
 
 CORE TABLES:
-- Customer(CustomerID INTEGER PRIMARY KEY, FirstName TEXT NOT NULL, LastName TEXT NOT NULL, Address TEXT NOT NULL, City TEXT NOT NULL, CountryID INTEGER REFERENCES Country(CountryID))
-- OrderDetail(OrderID INTEGER PRIMARY KEY, CustomerID INTEGER REFERENCES Customer(CustomerID), ProductID INTEGER REFERENCES Product(ProductID), OrderDate TEXT, QuantityOrdered INTEGER NOT NULL)
+- Customer(CustomerID SERIAL PRIMARY KEY, FirstName TEXT, LastName TEXT, Address TEXT, City TEXT, CountryID INTEGER FK -> Country)
+- OrderDetail(OrderID SERIAL PRIMARY KEY, CustomerID INTEGER FK -> Customer, ProductID INTEGER FK -> Product, OrderDate DATE, QuantityOrdered INTEGER)
 
 Helpful joins:
 - Country joins Region via Country.RegionID
@@ -326,7 +327,7 @@ Helpful joins:
 Common calculations:
 - Total revenue: SUM(QuantityOrdered * ProductUnitPrice)
 - Order counts: COUNT(DISTINCT OrderID) or COUNT(*)
-- Date filters: OrderDate is stored as TEXT; use strftime('%Y-%m', OrderDate) etc.
+- Date filters: OrderDate is a DATE column
 """
 
 # ---------- AUTH / LOGIN ----------
@@ -362,7 +363,7 @@ def login_screen():
 
     st.markdown("<div class='brand-title'>Aurora Query Studio</div>", unsafe_allow_html=True)
     st.markdown(
-        "<p class='brand-subtitle'>Sign in to turn natural language into safe SQL against your local SQLite warehouse. Your session stays local to this browser.</p>",
+        "<p class='brand-subtitle'>Sign in to turn natural language into safe, optimized SQL. Your session stays local to this browser.</p>",
         unsafe_allow_html=True,
     )
 
@@ -395,22 +396,34 @@ def require_login():
         login_screen()
         st.stop()
 
-# ---------- DB HELPERS (SQLite) ----------
+# ---------- DB HELPERS ----------
+
+@st.cache_resource
+def get_db_url():
+    POSTGRES_USERNAME = st.secrets["POSTGRES_USERNAME"]
+    POSTGRES_PASSWORD = st.secrets["POSTGRES_PASSWORD"]
+    POSTGRES_SERVER = st.secrets["POSTGRES_SERVER"]
+    POSTGRES_DATABASE = st.secrets["POSTGRES_DATABASE"]
+    return f"postgresql://{POSTGRES_USERNAME}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}/{POSTGRES_DATABASE}"
+
+DATABASE_URL = get_db_url()
 
 @st.cache_resource
 def get_db_connection():
-    """
-    Create and cache a connection to the local SQLite database.
-    check_same_thread=False lets Streamlit use it across threads.
-    """
     try:
-        conn = sqlite3.connect("normalized.db", check_same_thread=False)
-        conn.row_factory = sqlite3.Row
+        conn = psycopg2.connect(DATABASE_URL, connect_timeout=CONNECT_TIMEOUT_S)
+        conn.set_session(autocommit=True)
+        with conn.cursor() as cur:
+            cur.execute("SET statement_timeout = %s;", (STATEMENT_TIMEOUT_MS,))
+            cur.execute("SET lock_timeout = %s;", (LOCK_TIMEOUT_MS,))
+            cur.execute(
+                "SET idle_in_transaction_session_timeout = %s;",
+                (LOCK_TIMEOUT_MS * 10,),
+            )
         return conn
     except Exception as e:
-        st.error(f"Failed to connect to SQLite database: {e}")
+        st.error(f"Failed to connect to database: {e}")
         return None
-
 
 def _ensure_limit(sql: str, default_limit: int = QUERY_DEFAULT_LIMIT) -> str:
     """
@@ -419,24 +432,19 @@ def _ensure_limit(sql: str, default_limit: int = QUERY_DEFAULT_LIMIT) -> str:
     """
     pattern = re.compile(r"\blimit\b", re.IGNORECASE)
     if pattern.search(sql):
+        # Already has LIMIT somewhere
         return sql.strip()
 
     stripped = sql.strip().rstrip(";")
     return f"{stripped} LIMIT {default_limit}"
 
-
-def run_query(sql: str):
-    """
-    Execute SQL query against SQLite and return results as a DataFrame.
-    """
+def run_query(sql):
     conn = get_db_connection()
     if conn is None:
         return None
-
     safe_sql = _ensure_limit(sql)
     if safe_sql != sql:
         st.info(f"Added LIMIT {QUERY_DEFAULT_LIMIT} to keep the query responsive.")
-
     try:
         df = pd.read_sql_query(safe_sql, conn)
         return df
@@ -450,7 +458,6 @@ def run_query(sql: str):
 def get_openai_client():
     return OpenAI(api_key=OPENAI_API_KEY)
 
-
 def extract_sql_from_response(response_text: str) -> str:
     """
     Take the model response and return *only* the SQL query:
@@ -458,7 +465,8 @@ def extract_sql_from_response(response_text: str) -> str:
     - Remove a leading 'sql ' prefix if it exists
     """
     # Remove fenced code block markers like ```sql ... ```
-    text = re.sub(r"```sql\s*|\s*```", "", response_text, flags=re.IGNORECASE).strip()
+    text = re.sub(r"```sql\s*|\s*```", "", response_text,
+                  flags=re.IGNORECASE).strip()
 
     # Safety: if it still starts with 'sql ' (no backticks), drop that
     if text.lower().startswith("sql "):
@@ -466,10 +474,9 @@ def extract_sql_from_response(response_text: str) -> str:
 
     return text
 
-
-def generate_sql_with_gpt(user_question: str):
+def generate_sql_with_gpt(user_question):
     client = get_openai_client()
-    prompt = f"""You are an SQLite expert. Given the following database schema and a user's question, generate a valid SQLite query.
+    prompt = f"""You are a PostgreSQL expert. Given the following database schema and a user's question, generate a valid PostgreSQL query.
 
 {DATABASE_SCHEMA}
 
@@ -477,12 +484,12 @@ User Question: {user_question}
 
 Requirements:
 1. Generate ONLY the SQL query that I can directly use. No other response.
-2. Use proper JOINs to get descriptive names from lookup tables.
-3. Use appropriate aggregations (COUNT, AVG, SUM, etc.) when needed.
-4. Add LIMIT clauses for queries that might return many rows (default LIMIT 100).
-5. Use SQLite-compatible date/time functions when needed (e.g., strftime).
-6. Make sure the query is syntactically correct for SQLite.
-7. Add helpful column aliases using AS.
+2. Use proper JOINs to get descriptive names from lookup tables
+3. Use appropriate aggregations (COUNT, AVG, SUM, etc.) when needed
+4. Add LIMIT clauses for queries that might return many rows (default LIMIT 100)
+5. Use proper date/time functions for TIMESTAMP or DATE columns
+6. Make sure the query is syntactically correct for PostgreSQL
+7. Add helpful column aliases using AS
 
 Generate the SQL query:"""
     try:
@@ -491,7 +498,7 @@ Generate the SQL query:"""
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an SQLite expert who generates accurate SQL queries based on natural language questions.",
+                    "content": "You are a PostgreSQL expert who generates accurate SQL queries based on natural language questions.",
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -519,7 +526,7 @@ def main():
             </div>
             <div class="top-nav-right">
                 <span class="status-pill">Beta</span>
-                <span class="status-text">SQLite · Local file warehouse</span>
+                <span class="status-text">PostgreSQL · Guarded by timeouts</span>
             </div>
         </div>
         """,
@@ -636,7 +643,7 @@ def main():
             st.markdown("</div>", unsafe_allow_html=True)
 
             if run_button:
-                with st.spinner("Running against SQLite…"):
+                with st.spinner("Running against warehouse…"):
                     df = run_query(edited_sql)
                     if df is not None:
                         st.session_state.query_history.append(
@@ -659,7 +666,7 @@ def main():
             )
         with stats_cols[1]:
             st.markdown(
-                f"<div class='side-card'><div class='metric-label'>Statement timeout (display)</div><div class='metric-value'>{int(STATEMENT_TIMEOUT_MS/1000)}s</div></div>",
+                f"<div class='side-card'><div class='metric-label'>Statement timeout</div><div class='metric-value'>{int(STATEMENT_TIMEOUT_MS/1000)}s</div></div>",
                 unsafe_allow_html=True,
             )
 
