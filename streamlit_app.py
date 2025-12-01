@@ -33,13 +33,74 @@ st.markdown(
         }
 
         .block-container {
-            padding: 1.8rem 2.5rem 3rem;
-            max-width: 1300px;
+            padding: 1.8rem 2.5rem 3.2rem;
+            max-width: 1320px;
         }
 
-        /* ---------- BRAND HEADER ---------- */
+        a { text-decoration: none; }
+
+        /* ---------- TOP NAV (APPLE-LIKE) ---------- */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #4b5563;
+            margin-bottom: 1.4rem;
+        }
+        .top-nav-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+        .logo-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            background: radial-gradient(circle at 30% 20%, #60a5fa, #6366f1);
+        }
+        .top-nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .status-pill {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #e5f0ff;
+            color: #1d4ed8;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
+        .status-text {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        /* ---------- HERO ---------- */
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #e5e7eb;
+            font-size: 11px;
+            color: #4b5563;
+            margin-bottom: .55rem;
+        }
+        .hero-kicker-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: #10b981;
+        }
+
         .brand-title {
-            font-size: 34px;
+            font-size: 36px;
             font-weight: 650;
             letter-spacing: -0.045em;
             color: #111827;
@@ -49,12 +110,12 @@ st.markdown(
             color: #4b5563;
             font-size: 15px;
             max-width: 640px;
-            margin-top: 0.25rem;
+            margin-top: 0.35rem;
         }
 
-        /* ---------- MAIN SHELL (APPLE-LIKE CARD) ---------- */
+        /* ---------- MAIN SHELL ---------- */
         .app-shell {
-            margin-top: 2rem;
+            margin-top: 1.9rem;
             border-radius: 32px;
             padding: 1px;
             background: linear-gradient(135deg, rgba(209, 213, 219, 0.9), rgba(148, 163, 184, 0.9));
@@ -64,7 +125,7 @@ st.markdown(
             border-radius: 30px;
             background: #ffffff;
             padding: 24px 26px 26px;
-            box-shadow: 0 30px 60px rgba(15, 23, 42, 0.10);
+            box-shadow: 0 28px 60px rgba(15, 23, 42, 0.12);
         }
 
         .section-title {
@@ -86,6 +147,12 @@ st.markdown(
             border-radius: 16px;
             padding: 12px 14px;
             margin-bottom: 0.7rem;
+            transition: box-shadow 160ms ease-out, transform 160ms ease-out;
+        }
+
+        .side-card:hover {
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+            transform: translateY(-1px);
         }
 
         .metric-label {
@@ -108,6 +175,7 @@ st.markdown(
             background: #f9fafb !important;
             color: #111827 !important;
             font-size: 15px !important;
+            transition: box-shadow 160ms ease-out, border-color 160ms ease-out, background 160ms ease-out;
         }
 
         .stTextArea textarea::placeholder {
@@ -119,13 +187,22 @@ st.markdown(
             border: 1px solid #d1d5db !important;
             background: #f9fafb !important;
             color: #111827 !important;
+            transition: box-shadow 160ms ease-out, border-color 160ms ease-out, background 160ms ease-out;
         }
 
         .stTextInput input::placeholder {
             color: #9ca3af !important;
         }
 
-        /* ---------- BUTTONS (APPLE-LIKE PRIMARY BLUE) ---------- */
+        .stTextArea textarea:focus,
+        .stTextInput input:focus {
+            outline: none !important;
+            border-color: #0071e3 !important;
+            box-shadow: 0 0 0 1px #0071e3, 0 10px 25px rgba(15, 23, 42, 0.12) !important;
+            background: #ffffff !important;
+        }
+
+        /* ---------- BUTTONS ---------- */
         .btn-primary button {
             background: #0071e3;
             border: none;
@@ -134,9 +211,16 @@ st.markdown(
             border-radius: 999px;
             padding: 0.45rem 1.35rem;
             box-shadow: 0 12px 24px rgba(0, 113, 227, 0.30);
+            transition: transform 140ms ease-out, box-shadow 140ms ease-out, background 140ms ease-out;
         }
         .btn-primary button:hover {
             background: #005bb5;
+            transform: translateY(-1px);
+            box-shadow: 0 16px 30px rgba(0, 113, 227, 0.35);
+        }
+        .btn-primary button:active {
+            transform: translateY(0);
+            box-shadow: 0 8px 16px rgba(0, 113, 227, 0.25);
         }
 
         .btn-secondary button {
@@ -145,9 +229,12 @@ st.markdown(
             border-radius: 999px;
             border: 1px solid #d1d5db;
             font-weight: 500;
+            transition: background 140ms ease-out, transform 140ms ease-out, box-shadow 140ms ease-out;
         }
         .btn-secondary button:hover {
             background: #e5e7eb;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(148, 163, 184, 0.4);
         }
 
         /* ---------- SIDEBAR ---------- */
@@ -165,9 +252,12 @@ st.markdown(
             background: #ffffff;
             color: #111827;
             font-weight: 500;
+            transition: background 140ms ease-out, box-shadow 140ms ease-out, transform 140ms ease-out;
         }
         [data-testid="stSidebar"] .stButton button:hover {
             background: #f3f4f6;
+            box-shadow: 0 8px 18px rgba(148, 163, 184, 0.6);
+            transform: translateY(-1px);
         }
 
         /* ---------- CODE BLOCKS ---------- */
@@ -218,9 +308,34 @@ Common calculations:
 
 def login_screen():
     """Display login screen and authenticate user."""
+    # mini nav even on login
+    st.markdown(
+        """
+        <div class="top-nav">
+            <div class="top-nav-left">
+                <div class="logo-dot"></div>
+                <div>Aurora</div>
+            </div>
+            <div class="top-nav-right">
+                <span class="status-text">Secure workspace</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="hero-kicker">
+            <span class="hero-kicker-dot"></span>
+            Private SQL assistant
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.markdown("<div class='brand-title'>Aurora Query Studio</div>", unsafe_allow_html=True)
     st.markdown(
-        "<p class='brand-subtitle'>A focused, private workspace to translate natural language into safe, optimized SQL for your analytics warehouse.</p>",
+        "<p class='brand-subtitle'>Sign in to your Aurora workspace to turn natural language into safe, optimized SQL for your analytics database.</p>",
         unsafe_allow_html=True,
     )
 
@@ -376,7 +491,33 @@ Generate the SQL query:"""
 def main():
     require_login()
 
-    # Brand header
+    # Top nav
+    st.markdown(
+        """
+        <div class="top-nav">
+            <div class="top-nav-left">
+                <div class="logo-dot"></div>
+                <div>Aurora Query Studio</div>
+            </div>
+            <div class="top-nav-right">
+                <span class="status-pill">Beta</span>
+                <span class="status-text">Connected to PostgreSQL • Guarded by timeouts</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Hero
+    st.markdown(
+        """
+        <div class="hero-kicker">
+            <span class="hero-kicker-dot"></span>
+            Natural language to SQL, in one workspace
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.markdown("<div class='brand-title'>Aurora Query Studio</div>", unsafe_allow_html=True)
     st.markdown(
         "<p class='brand-subtitle'>Describe the insight you want. Aurora turns it into audited SQL you can inspect, refine, and run with guardrails.</p>",
@@ -410,11 +551,11 @@ def main():
     if "current_question" not in st.session_state:
         st.session_state.current_question = None
 
-    # One big clean card for workspace
+    # Workspace card
     st.markdown("<div class='app-shell'><div class='app-shell-inner'>", unsafe_allow_html=True)
     left, right = st.columns([1.85, 1], gap="large")
 
-    # LEFT: question + sql + results
+    # LEFT: question + SQL + results
     with left:
         st.markdown("<div class='section-title'>Your question</div>", unsafe_allow_html=True)
         st.markdown(
